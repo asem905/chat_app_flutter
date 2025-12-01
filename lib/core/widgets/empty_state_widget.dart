@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:chat_app/core/theming/text_styles.dart';
 import 'package:flutter/material.dart';
 import '../theming/app_colors.dart';

@@ -1,20 +1,23 @@
-import 'package:chat_app/core/widgets/app_text_form_field.dart';
 import 'package:flutter/material.dart';
+import '../../../../core/widgets/app_text_form_field.dart';
 import '../../../../core/theming/app_colors.dart';
 
 class PasswordTextField extends StatefulWidget {
   final TextEditingController controller;
   final String? labelText;
   final String? errorText;
-  final bool enabled;
+  final Function(String)? onChanged;
   final String? Function(String?)? validator;
+  final bool enabled;
+
   const PasswordTextField({
     Key? key,
     required this.controller,
     this.labelText,
     this.errorText,
+    this.onChanged,
+    this.validator,
     this.enabled = true,
-    this.validator
   }) : super(key: key);
 
   @override
@@ -33,7 +36,8 @@ class _PasswordTextFieldState extends State<PasswordTextField> {
       errorText: widget.errorText,
       obscureText: _isObscured,
       keyboardType: TextInputType.visiblePassword,
-      onChanged:  (_) {},
+      onChanged: widget.onChanged,
+      validator: widget.validator,
       enabled: widget.enabled,
       prefixIcon: const Icon(Icons.lock_outline, color: AppColors.textSecondary),
       suffixIcon: IconButton(
@@ -45,7 +49,6 @@ class _PasswordTextFieldState extends State<PasswordTextField> {
           setState(() => _isObscured = !_isObscured);
         },
       ),
-      validator: widget.validator
     );
   }
 }

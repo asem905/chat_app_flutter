@@ -1,7 +1,7 @@
 // ignore_for_file: non_constant_identifier_names
 
 class RoomModel {
-  final String id;
+  final int id;
   final String room_name;
   final String? room_description;
   final int unreadCount;
@@ -12,11 +12,11 @@ class RoomModel {
   RoomModel({
     required this.id,
     required this.room_name,
-    this.room_description,
-    required this.unreadCount,
+    required this.room_description,
     required this.createdAt,
     required this.is_private,
-    required this.room_created_by
+    required this.room_created_by,
+    this.unreadCount=0
   });
 
   factory RoomModel.fromJson(Map<String, dynamic> json) {
@@ -24,7 +24,7 @@ class RoomModel {
       id: json['id'],
       room_name: json['room_name'],
       room_description: json['room_description'],
-      unreadCount: json['unreadCount'],
+      unreadCount: json['unreadCount']??0,
       createdAt: DateTime.parse(json['createdAt']),
       is_private: json['is_private'],
       room_created_by: json['room_created_by'],

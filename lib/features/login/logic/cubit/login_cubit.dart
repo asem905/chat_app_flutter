@@ -20,6 +20,7 @@ class LoginCubit extends Cubit<LoginState> {
       saveUserToken(response.data['user']['token']);
       emit(LoginSuccess(response));
     } catch (e) {
+      print("================="+e.toString());
       emit(LoginError(e.toString()));
     }
   }

@@ -1,7 +1,7 @@
 class UserModel {
+  int? id;
   String? username;
   String? email;
-  String? id;
   String? token;
   String? status;
   String? role;
@@ -19,7 +19,7 @@ class UserModel {
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      id: json['id'] ?? json['_id'] ?? '',
+      id: _parseId(json['id']),
       username: json['username'] ?? '',
       email: json['email'] ?? '',
       token: json['token'] ?? '',
@@ -27,6 +27,14 @@ class UserModel {
       role: json['role'] ?? '',
       avatar: json['avatar'] ?? '',
     );
+  }
+
+  // Helper method to safely parse id from both String and int
+  static int? _parseId(dynamic id) {
+    if (id == null) return null;
+    if (id is int) return id;
+    if (id is String) return int.tryParse(id);
+    return null;
   }
 
   Map<String, dynamic> toJson() {

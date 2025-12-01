@@ -10,15 +10,20 @@ class LoginService {
   // LoginService(this._dio);
 
   Future<LoginResponse> login(LoginRequest request) async {
+    var req=jsonEncode(request.toJson());
     final response = await http.post(
       Uri.parse(ApiConstants.login),
-      body: request.toJson(),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: req
     );
     if (response.statusCode == 200) {
       var res = json.decode(response.body);
-      if(res['status'] == 'SUCCESS'){}
       return LoginResponse.fromJson(res);
     } else {
+      print(response.body);
       throw Exception('Failed to login');
     }
   }

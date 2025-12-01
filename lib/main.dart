@@ -6,10 +6,12 @@ import 'package:chat_app/core/helpers/shared_pref_helper.dart';
 import 'package:chat_app/core/routing/app_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+bool isLoggedInUser=false;
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
   setUpGetIt();
   await ScreenUtil.ensureScreenSize();
+  // checkIfLoggedInUser();
   runApp(ChatApp(
     appRouter: AppRouter()
   ));

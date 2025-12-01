@@ -1,9 +1,12 @@
+import 'package:chat_app/core/helpers/extensions.dart';
+import 'package:chat_app/core/routing/routes.dart';
 import 'package:chat_app/features/home/logic/cubit/home_cubit.dart';
 import 'package:chat_app/features/home/logic/cubit/home_state.dart';
 import 'package:chat_app/features/home/view/widgets/create_room_dialog.dart';
 import 'package:chat_app/features/home/view/widgets/room_list_item.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/theming/app_colors.dart';
 import '../../../../core/widgets/custom_app_bar.dart';
 import '../../../../core/widgets/empty_state_widget.dart';
@@ -17,6 +20,25 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  int currnt_index = 0;
+  List navChoices = [
+    Routes.homeScreen,
+    Routes.profileScreen,
+    Routes.settingsScreen,
+    Routes.discoverRoomsScreen,
+  ];
+  List<BottomNavigationBarItem> bottomNavItems = [
+    BottomNavigationBarItem(icon: const Icon(Icons.home), label: 'Home'),
+    BottomNavigationBarItem(icon: const Icon(Icons.person), label: 'Profile'),
+    BottomNavigationBarItem(
+      icon: const Icon(Icons.settings),
+      label: 'Settings',
+    ),
+    BottomNavigationBarItem(
+      icon: const Icon(Icons.family_restroom_rounded),
+      label: 'Rooms',
+    ),
+  ];
   @override
   void initState() {
     super.initState();
@@ -27,12 +49,12 @@ class _HomeScreenState extends State<HomeScreen> {
     showDialog(
       context: context,
       builder: (dialogContext) => CreateRoomDialog(
-        onCreateRoom: (name, isPrivate,description) {
+        onCreateRoom: (name, isPrivate, description) {
           context.read<HomeCubit>().createRoom(
-                name,
-                description,
-                isPrivate: isPrivate
-              );
+            name,
+            description,
+            isPrivate: isPrivate,
+          );
         },
       ),
     );
@@ -45,7 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) => Container(
-        padding: const EdgeInsets.symmetric(vertical: 20),
+        padding: EdgeInsets.symmetric(vertical: 20.h),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -53,7 +75,7 @@ class _HomeScreenState extends State<HomeScreen> {
               leading: const Icon(Icons.person, color: AppColors.primary),
               title: const Text('Profile'),
               onTap: () {
-                Navigator.pop(context);
+                context.pop();
                 // Navigate to profile
               },
             ),
@@ -61,7 +83,7 @@ class _HomeScreenState extends State<HomeScreen> {
               leading: const Icon(Icons.settings, color: AppColors.primary),
               title: const Text('Settings'),
               onTap: () {
-                Navigator.pop(context);
+                context.pop();
                 // Navigate to settings
               },
             ),
@@ -69,7 +91,7 @@ class _HomeScreenState extends State<HomeScreen> {
               leading: const Icon(Icons.logout, color: AppColors.error),
               title: const Text('Logout'),
               onTap: () {
-                Navigator.pop(context);
+                context.pop();
                 context.read<HomeCubit>().logout();
                 // Navigate to login
               },
@@ -84,6 +106,20 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
+      bottomNavigationBar: BottomNavigationBar(
+        items:bottomNavItems,
+        currentIndex: currnt_index,
+        onTap: (index) {
+          setState(() {
+            currnt_index = index;
+            context.pushNamed(navChoices[index]);
+          });
+        },
+        selectedItemColor: AppColors.primary,
+        unselectedItemColor: AppColors.textSecondary,
+        backgroundColor: AppColors.background,
+        elevation: 0,
+      ),
       appBar: CustomAppBar(
         title: 'Chats',
         actions: [
@@ -97,11 +133,20 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: const Icon(Icons.more_vert, color: AppColors.textPrimary),
             onPressed: _showMenu,
           ),
+          //show all rooms button
+          IconButton(
+            icon: const Icon(Icons.list, color: AppColors.textPrimary),
+            onPressed: () {
+              context.pushNamed(Routes.discoverRoomsScreen);
+            },
+          ),
         ],
       ),
+
       body: BlocConsumer<HomeCubit, HomeState>(
         listener: (context, state) {
           if (state is HomeError) {
+            print(state.message);
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.message),
@@ -134,9 +179,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   label: const Text('Create Chat'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 12,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 24.w,
+                      vertical: 12.h,
                     ),
                   ),
                 ),
@@ -154,12 +199,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   return RoomListItem(
                     room: room,
                     onTap: () {
-                      // Navigate to chat screen
-                      // Navigator.pushNamed(
-                      //   context,
-                      //   '/chat',
-                      //   arguments: room,
-                      // );
+                      context.pushNamed(
+                        Routes.roomApprovalScreen,
+                        arguments: [room.id, room.room_name],
+                      );
                     },
                   );
                 },

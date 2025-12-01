@@ -1,35 +1,45 @@
-import 'package:chat_app/core/theming/fontweight_helper.dart';
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
 
 class AppTextStyles {
   static const TextStyle heading1 = TextStyle(
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: FontWeight.bold,
     color: AppColors.textPrimary,
+    letterSpacing: -0.5,
   );
 
   static const TextStyle heading2 = TextStyle(
-    fontSize: 22,
-    fontWeight: FontweightHelper.semiBold,
+    fontSize: 24,
+    fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
+    letterSpacing: -0.3,
   );
 
   static const TextStyle bodyLarge = TextStyle(
     fontSize: 16,
-    fontWeight: FontweightHelper.regular,
+    fontWeight: FontWeight.w400,
     color: AppColors.textPrimary,
+    height: 1.5,
   );
 
   static const TextStyle bodyMedium = TextStyle(
     fontSize: 14,
-    fontWeight: FontweightHelper.regular,
+    fontWeight: FontWeight.w400,
     color: AppColors.textSecondary,
+    height: 1.4,
   );
 
   static const TextStyle button = TextStyle(
     fontSize: 16,
-    fontWeight: FontweightHelper.semiBold,
+    fontWeight: FontWeight.w600,
     color: Colors.white,
+    letterSpacing: 0.5,
+  );
+
+  static const TextStyle caption = TextStyle(
+    fontSize: 12,
+    fontWeight: FontWeight.w400,
+    color: AppColors.textSecondary,
   );
 }
