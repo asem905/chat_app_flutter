@@ -231,7 +231,7 @@ class _DiscoverRoomsScreenState extends State<DiscoverRoomsScreen> {
             return EmptyStateWidget(
               icon: Icons.error_outline,
               title: 'Oops!',
-              message: state.message,
+              message: "Couldn't load available rooms check your connection",
               action: ElevatedButton.icon(
                 onPressed: () {
                   context.read<DiscoverRoomsCubit>().loadAvailableRooms();

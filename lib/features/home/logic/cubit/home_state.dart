@@ -12,12 +12,15 @@ class HomeLoading extends HomeState {}
 
 class HomeLoaded extends HomeState {
   final List<RoomModel> rooms;
+  final bool isOffline; // ✅ NEW
 
   HomeLoaded({
     required this.rooms,
+    this.isOffline = false, // ✅ NEW
   });
+
   @override
-  List<Object?> get props => [rooms];
+  List<Object?> get props => [rooms, isOffline];
 }
 
 class HomeError extends HomeState {

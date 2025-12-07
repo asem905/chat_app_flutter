@@ -1,5 +1,4 @@
 // ignore_for_file: use_build_context_synchronously
-
 import 'package:chat_app/core/helpers/extensions.dart';
 import 'package:chat_app/core/helpers/nav_helper.dart';
 import 'package:chat_app/core/helpers/shared_pref_helper.dart';
@@ -26,6 +25,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int currnt_index = 0;
 
+
   @override
   void initState() {
     super.initState();
@@ -46,7 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-
+  
   void _showMenu() {
     showModalBottomSheet(
       context: context,
@@ -136,14 +136,30 @@ class _HomeScreenState extends State<HomeScreen> {
             print(state.message);
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(state.message),
+                content: Row(
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text(state.message)),
+                  ],
+                ),
                 backgroundColor: AppColors.error,
               ),
             );
           } else if (state is RoomCreated) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Chat created successfully!'),
+                content: Row(
+                  children: [
+                    Icon(Icons.check_circle, color: Colors.white, size: 20),
+                    SizedBox(width: 8),
+                    Text('Chat created successfully!'),
+                  ],
+                ),
                 backgroundColor: AppColors.secondary,
               ),
             );
@@ -155,55 +171,92 @@ class _HomeScreenState extends State<HomeScreen> {
           }
 
           if (state is HomeLoaded) {
-            if (state.rooms.isEmpty) {
-              return EmptyStateWidget(
-                icon: Icons.chat_bubble_outline,
-                title: 'No Chats Yet',
-                message: 'Start a conversation by creating a new chat',
-                action: ElevatedButton.icon(
-                  onPressed: _showCreateRoomDialog,
-                  icon: const Icon(Icons.add),
-                  label: const Text('Create Chat'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 24.w,
-                      vertical: 12.h,
+            // ✅ NEW: Show offline banner
+            return Column(
+              children: [
+                if (state.isOffline)
+                  Container(
+                    width: double.infinity,
+                    color: Colors.orange.shade700,
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 8,
+                      horizontal: 16,
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.cloud_off,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 8),
+                        const Expanded(
+                          child: Text(
+                            'You are offline. Showing old chats.',
+                            style: TextStyle(color: Colors.white, fontSize: 13),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-              );
-            }
 
-            return RefreshIndicator(
-              onRefresh: () async {
-                await context.read<HomeCubit>().refreshRooms();
-              },
-              child: ListView.builder(
-                itemCount: state.rooms.length,
-                itemBuilder: (context, index) {
-                  final room = state.rooms[index];
-                  return RoomListItem(
-                    room: room,
-                    onTap: () async {
-                      final currentUserId = await SharedPrefHelper.getInt(
-                        'current_user_id',
-                      );
-                      if (room.room_created_by == currentUserId) {
-                        context.pushNamed(
-                          Routes.roomApprovalScreen,
-                          arguments: [room.id, room.room_name],
-                        );
-                      }else{
-                        context.pushNamed(
-                        Routes.chatRoomScreen,
-                        arguments: [room.id, room.room_name,currentUserId],
-                      );
-                      }
-                    },
-                  );
-                },
-              ),
+                Expanded(
+                  child: state.rooms.isEmpty
+                      ? EmptyStateWidget(
+                          icon: Icons.chat_bubble_outline,
+                          title: 'No Chats Yet',
+                          message:
+                              'Start a conversation by creating a new chat',
+                          action: ElevatedButton.icon(
+                            onPressed: _showCreateRoomDialog,
+                            icon: const Icon(Icons.add),
+                            label: const Text('Create Chat'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 24.w,
+                                vertical: 12.h,
+                              ),
+                            ),
+                          ),
+                        )
+                      : RefreshIndicator(
+                          onRefresh: () async {
+                            await context.read<HomeCubit>().refreshRooms();
+                          },
+                          child: ListView.builder(
+                            itemCount: state.rooms.length,
+                            itemBuilder: (context, index) {
+                              final room = state.rooms[index];
+                              return RoomListItem(
+                                room: room,
+                                onTap: () async {
+                                  final currentUserId =
+                                      await SharedPrefHelper.getInt(
+                                        'current_user_id',
+                                      );
+                                  if (room.room_created_by == currentUserId && !state.isOffline ) {
+                                    context.pushNamed(
+                                      Routes.roomApprovalScreen,
+                                      arguments: [room.id, room.room_name],
+                                    );
+                                  } else {
+                                    context.pushNamed(
+                                      Routes.chatRoomScreen,
+                                      arguments: [
+                                        room.id,
+                                        room.room_name,
+                                        currentUserId,
+                                      ],
+                                    );
+                                  }
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                ),
+              ],
             );
           }
 

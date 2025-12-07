@@ -25,6 +25,22 @@ class ChatDatabase {
   }
 
   Future _createDB(Database db, int version) async {
+    //rooms table
+    // Rooms table
+    await db.execute('''
+      CREATE TABLE rooms (
+        id INTEGER PRIMARY KEY,
+        room_name TEXT NOT NULL,
+        room_description TEXT,
+        room_created_by INTEGER NOT NULL,
+        is_private INTEGER DEFAULT 0,
+        unread_count INTEGER DEFAULT 0,
+        createdAt TEXT NOT NULL,
+        updatedAt TEXT NOT NULL,
+        last_synced_at TEXT
+      )
+    ''');
+    
     // Messages table
     await db.execute('''
       CREATE TABLE messages (
@@ -58,6 +74,9 @@ class ChatDatabase {
     ''');
 
     // Create indexes for better performance
+    await db.execute('''
+      CREATE INDEX idx_rooms_created_at ON rooms(createdAt)
+    ''');
     await db.execute('''
       CREATE INDEX idx_messages_room_id ON messages(room_id)
     ''');
@@ -158,6 +177,7 @@ class ChatDatabase {
 
   Future<void> removePendingMessage(String localId) async {
     final db = await database;
+    print('📡 Removing pending message with localId: $localId');
     await db.delete(
       'pending_messages',
       where: 'local_id = ?',
@@ -172,6 +192,60 @@ class ChatDatabase {
       [localId],
     );
   }
+
+  // ==================== ROOMS ====================
+
+   Future<void> insertRoom(Map<String, dynamic> room) async {
+    final db = await database;
+    await db.insert(
+      'rooms',
+      room,
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<void> insertRooms(List<Map<String, dynamic>> rooms) async {
+    final db = await database;
+    final batch = db.batch();
+    
+    for (var room in rooms) {
+      batch.insert(
+        'rooms',
+        room,
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    }
+    
+    await batch.commit(noResult: true);
+  }
+
+  Future<List<Map<String, dynamic>>> getRooms() async {
+    final db = await database;
+    return await db.query(
+      'rooms',
+      orderBy: 'updatedAt DESC',
+    );
+  }
+
+  Future<void> updateRoomUnreadCount(int roomId, int unreadCount) async {
+    final db = await database;
+    await db.update(
+      'rooms',
+      {'unread_count': unreadCount},
+      where: 'id = ?',
+      whereArgs: [roomId],
+    );
+  }
+
+  Future<void> deleteRoom(int roomId) async {
+    final db = await database;
+    await db.delete(
+      'rooms',
+      where: 'id = ?',
+      whereArgs: [roomId],
+    );
+  }
+
 
   // ==================== UTILITY ====================
 

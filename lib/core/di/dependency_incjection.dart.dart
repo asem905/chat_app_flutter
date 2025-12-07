@@ -20,6 +20,8 @@ import 'package:get_it/get_it.dart';
 
 final getIt = GetIt.instance;
 setUpGetIt() async {
+  final connectivityService=ConnectivityService();
+  final database=ChatDatabase.instance;
   //login dependencies
   getIt.registerLazySingleton<LoginService>(() => LoginService());
   getIt.registerLazySingleton<LoginRepository>(() => LoginRepository(getIt()));
@@ -32,8 +34,8 @@ setUpGetIt() async {
 
   //Home dependencies
   getIt.registerLazySingleton<HomeService>(() => HomeService());
-  getIt.registerLazySingleton<HomeRepository>(() => HomeRepository(getIt()));
-  getIt.registerFactory<HomeCubit>(() => HomeCubit(getIt()));
+  getIt.registerLazySingleton<HomeRepositoryWithCache>(() => HomeRepositoryWithCache(service: getIt<HomeService>(),database: database,connectivityService: connectivityService));
+  getIt.registerFactory<HomeCubit>(() => HomeCubit(getIt(),connectivityService));
 
   // discover rooms dependencies
   getIt.registerLazySingleton<DiscoverRoomsService>(
@@ -54,11 +56,11 @@ setUpGetIt() async {
   //chat room dependencies
   final webSocketService = WebSocketService();
   webSocketService.connect();
-  final connectivityService=ConnectivityService();
+  
   getIt.registerLazySingleton<WebSocketService>(() => webSocketService);
   getIt.registerLazySingleton<ChatRoomService>(() => ChatRoomService());
   getIt.registerLazySingleton<ChatRepositoryWithCache>(
-    () => ChatRepositoryWithCache(service: getIt<ChatRoomService>(), database: ChatDatabase.instance, connectivityService: connectivityService),
+    () => ChatRepositoryWithCache(service: getIt<ChatRoomService>(), database: database, connectivityService: connectivityService),
   );
   getIt.registerFactory<ChatRoomCubit>(
     () => ChatRoomCubit(getIt<ChatRepositoryWithCache>(), getIt<WebSocketService>(), connectivityService),
