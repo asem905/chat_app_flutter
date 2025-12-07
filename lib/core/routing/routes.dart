@@ -10,4 +10,5 @@ class Routes {
   static const String profileScreen='/profile-screen';
   static const String settingsScreen='/settings-screen';
   static const String roomApprovalScreen='/room-approval-screen';
+  static const String chatRoomScreen='/chat-room-screen';
 }

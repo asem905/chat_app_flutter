@@ -1,22 +1,16 @@
 import 'dart:convert';
-
-import 'package:chat_app/core/helpers/constants.dart';
-import 'package:chat_app/core/helpers/shared_pref_helper.dart';
+import 'package:chat_app/core/helpers/get_token.dart';
 import 'package:chat_app/core/networking/api_constants.dart';
 import 'package:chat_app/features/room_approval/data/models/pendimg_user_model.dart';
 
 import 'package:http/http.dart' as http;
 
 class RoomApprovalService {
-  final String token;
-  RoomApprovalService(this.token);
-  static create() async {
-    final token =
-        await SharedPrefHelper.getSecuredString(SharedPrefKeys.userToken) ?? '';
-    return RoomApprovalService(token);
-  }
+  RoomApprovalService();
 
   Future<PendingUserModel> getPendingUsers(int roomId) async {
+    final result = await getTokenAndCurrentUserId();
+    final token = result['token'];
     final response = await http.get(
       Uri.parse("${ApiConstants.rooms}/$roomId/non-approved-users"),
       headers: {
@@ -40,7 +34,10 @@ class RoomApprovalService {
   }
 
   Future<void> approveUser(int roomId, int userId) async {
-    final response = await http.post(
+    print("roomId: $roomId, userId: $userId");
+    final result = await getTokenAndCurrentUserId();
+    final token = result['token'];
+    final response = await http.get(
       Uri.parse("${ApiConstants.rooms}/$roomId/approve/$userId"),
       headers: {
         'Content-Type': 'application/json',
@@ -48,6 +45,7 @@ class RoomApprovalService {
         'Authorization': 'Bearer $token',
       },
     );
+    print(response.body);
     try {
       if (response.statusCode == 200) {
         // Success - no return needed

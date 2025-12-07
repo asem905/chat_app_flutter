@@ -5,7 +5,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class ChatApp extends StatelessWidget {
   final AppRouter appRouter;
-  const ChatApp({super.key, required this.appRouter});
+  final bool isLoggedInUser;
+  const ChatApp({super.key, required this.appRouter, this.isLoggedInUser = false});
 
   // This widget is the root of your application.
   @override
@@ -19,7 +20,7 @@ class ChatApp extends StatelessWidget {
           scaffoldBackgroundColor: Colors.white,
         ),
         onGenerateRoute: appRouter.generateRoute,
-        initialRoute: Routes.loginScreen,
+        initialRoute:isLoggedInUser ? Routes.homeScreen : Routes.loginScreen,
       ),
     );
   }

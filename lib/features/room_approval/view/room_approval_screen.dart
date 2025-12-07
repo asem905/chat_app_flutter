@@ -1,11 +1,15 @@
 // ignore_for_file: deprecated_member_use
 
+import 'package:chat_app/core/helpers/extensions.dart';
+import 'package:chat_app/core/helpers/shared_pref_helper.dart';
+import 'package:chat_app/core/routing/routes.dart';
 import 'package:chat_app/features/room_approval/logic/cubit/room_approval_cubit.dart';
 import 'package:chat_app/features/room_approval/logic/cubit/room_approval_state.dart';
 import 'package:chat_app/features/room_approval/view/widgets/approve_reject_dialog.dart';
 import 'package:chat_app/features/room_approval/view/widgets/pending_user_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/theming/app_colors.dart';
 import '../../../../core/theming/text_styles.dart';
 import '../../../../core/widgets/custom_app_bar.dart';
@@ -71,6 +75,14 @@ class _RoomApprovalScreenState extends State<RoomApprovalScreen> {
           icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
+      ),
+      floatingActionButton: FloatingActionButton(onPressed: ()async{
+        final currentUserId=await SharedPrefHelper.getInt('current_user_id');
+        context.pushNamed(Routes.chatRoomScreen,arguments: [widget.roomId,widget.roomName,currentUserId]);
+      },
+      backgroundColor: AppColors.surface,
+
+      child: Icon(Icons.chat_outlined, color: AppColors.secondary,size: 38.sp,),
       ),
       body: BlocConsumer<RoomApprovalCubit, RoomApprovalState>(
         listener: (context, state) {
@@ -226,6 +238,7 @@ class _RoomApprovalScreenState extends State<RoomApprovalScreen> {
                       itemCount: state.pendingUsers.length,
                       itemBuilder: (context, index) {
                         final user = state.pendingUsers[index];
+                        print("user: ${user.id}");
                         return PendingUserCard(
                           user: user,
                           isProcessing: _processingUserId == user.id,

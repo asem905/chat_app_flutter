@@ -1,28 +1,24 @@
 import 'dart:convert';
-
-import 'package:chat_app/core/helpers/constants.dart';
-import 'package:chat_app/core/helpers/shared_pref_helper.dart';
+import 'package:chat_app/core/helpers/get_token.dart';
 import 'package:chat_app/core/networking/api_constants.dart';
-
 import '../models/room_model.dart';
 import 'package:http/http.dart' as http;
 
 class HomeService {
-  final String token;
   
   // Private constructor
-  HomeService._internal(this.token);
+  HomeService();
   
   // Factory method to create instance asynchronously
-  static Future<HomeService> create() async {
-    final token = await SharedPrefHelper.getSecuredString(SharedPrefKeys.userToken) ?? '';
-    return HomeService._internal(token);
-  }
+   
   
   Future<List<RoomModel>> getRooms() async {
     try {
+      final result = await getTokenAndCurrentUserId();
+      print("result: $result");
+      final token = result['token'];
       print('📡 Fetching rooms from: ${ApiConstants.myRooms}');
-      print('🔑 Token: ${token.isEmpty ? "EMPTY TOKEN!" : "Token exists"}');
+      print('🔑 Token: ${token.isEmpty ? "EMPTY TOKEN!" : "Token === $token === exists"}');
       
       final response = await http.get(
         Uri.parse(ApiConstants.myRooms),
@@ -89,7 +85,8 @@ class HomeService {
   ) async {
     try {
       print('📡 Creating room: $name');
-      
+      final result = await getTokenAndCurrentUserId();
+      final token = result['token'];
       final response = await http.post(
         Uri.parse(ApiConstants.createRoom), // Add this to your ApiConstants
         headers: {

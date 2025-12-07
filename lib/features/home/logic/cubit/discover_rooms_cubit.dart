@@ -14,11 +14,15 @@ class DiscoverRoomsCubit extends Cubit<DiscoverRoomsState> {
     try {
       final allrooms = await _repository.getAvailableRooms();
       print("Rooms: ${allrooms.availableRooms}");
-
-      var rooms = allrooms.availableRooms.map((room) => RoomWithMembersModel.fromJson(
+      var rooms=allrooms.availableRooms;
+      if(rooms.isNotEmpty){
+        rooms = rooms.map((room) => RoomWithMembersModel.fromJson(
         room.toJson(),
-      )).toList();
-      print("Rooms: ${rooms[0].room_owner}");
+        )).toList();
+        print("Rooms: ${rooms[0].room_owner}");
+      }else{
+        rooms = [];
+      }
       emit(DiscoverRoomsLoaded(
         rooms: rooms,
         filteredRooms: rooms,

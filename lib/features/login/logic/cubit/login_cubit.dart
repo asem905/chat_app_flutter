@@ -17,7 +17,10 @@ class LoginCubit extends Cubit<LoginState> {
     try {
       final request = LoginRequest(email: email, password: password);
       final response = await _repository.login(request);
-      saveUserToken(response.data['user']['token']);
+      print("token+=+: ${response.data['user']['token']}");
+      await saveUserToken(response.data['user']['token']);
+      print("user id: ${response.data['user']['id']}");
+      await SharedPrefHelper.setData('current_user_id', response.data['user']['id'] as int);
       emit(LoginSuccess(response));
     } catch (e) {
       print("================="+e.toString());
@@ -29,7 +32,10 @@ class LoginCubit extends Cubit<LoginState> {
     emit(LoginInitial());
   }
   Future<void> saveUserToken(String token) async {
+    //clear sharedpref first:
+    await SharedPrefHelper.clearAllSecuredData();
+    print("================================================");
     await SharedPrefHelper.setSecuredString(SharedPrefKeys.userToken, token);
-    
+    print("================================================");
   }
 }

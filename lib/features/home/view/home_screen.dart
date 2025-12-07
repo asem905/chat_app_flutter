@@ -1,4 +1,8 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:chat_app/core/helpers/extensions.dart';
+import 'package:chat_app/core/helpers/nav_helper.dart';
+import 'package:chat_app/core/helpers/shared_pref_helper.dart';
 import 'package:chat_app/core/routing/routes.dart';
 import 'package:chat_app/features/home/logic/cubit/home_cubit.dart';
 import 'package:chat_app/features/home/logic/cubit/home_state.dart';
@@ -21,24 +25,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int currnt_index = 0;
-  List navChoices = [
-    Routes.homeScreen,
-    Routes.profileScreen,
-    Routes.settingsScreen,
-    Routes.discoverRoomsScreen,
-  ];
-  List<BottomNavigationBarItem> bottomNavItems = [
-    BottomNavigationBarItem(icon: const Icon(Icons.home), label: 'Home'),
-    BottomNavigationBarItem(icon: const Icon(Icons.person), label: 'Profile'),
-    BottomNavigationBarItem(
-      icon: const Icon(Icons.settings),
-      label: 'Settings',
-    ),
-    BottomNavigationBarItem(
-      icon: const Icon(Icons.family_restroom_rounded),
-      label: 'Rooms',
-    ),
-  ];
+
   @override
   void initState() {
     super.initState();
@@ -107,12 +94,12 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       bottomNavigationBar: BottomNavigationBar(
-        items:bottomNavItems,
+        items: NavBottomHelper.bottomNavItems(),
         currentIndex: currnt_index,
         onTap: (index) {
           setState(() {
             currnt_index = index;
-            context.pushNamed(navChoices[index]);
+            context.pushNamed(NavBottomHelper.navChoices()[index]);
           });
         },
         selectedItemColor: AppColors.primary,
@@ -198,11 +185,21 @@ class _HomeScreenState extends State<HomeScreen> {
                   final room = state.rooms[index];
                   return RoomListItem(
                     room: room,
-                    onTap: () {
-                      context.pushNamed(
-                        Routes.roomApprovalScreen,
-                        arguments: [room.id, room.room_name],
+                    onTap: () async {
+                      final currentUserId = await SharedPrefHelper.getInt(
+                        'current_user_id',
                       );
+                      if (room.room_created_by == currentUserId) {
+                        context.pushNamed(
+                          Routes.roomApprovalScreen,
+                          arguments: [room.id, room.room_name],
+                        );
+                      }else{
+                        context.pushNamed(
+                        Routes.chatRoomScreen,
+                        arguments: [room.id, room.room_name,currentUserId],
+                      );
+                      }
                     },
                   );
                 },

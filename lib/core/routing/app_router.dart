@@ -2,6 +2,8 @@ import 'package:chat_app/core/di/dependency_incjection.dart.dart';
 import 'package:chat_app/core/routing/routes.dart';
 import 'package:chat_app/features/additional_screens/profile_screen.dart';
 import 'package:chat_app/features/additional_screens/settings_screen.dart';
+import 'package:chat_app/features/chat_room/logic/cubit/chat_cubit.dart';
+import 'package:chat_app/features/chat_room/view/chat_room_screen.dart';
 import 'package:chat_app/features/home/logic/cubit/discover_rooms_cubit.dart';
 import 'package:chat_app/features/home/logic/cubit/home_cubit.dart';
 import 'package:chat_app/features/home/view/discover_rooms_screen.dart';
@@ -43,6 +45,11 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => BlocProvider(
           create: (context) => getIt<RoomApprovalCubit>(),
           child: RoomApprovalScreen(roomId: (arguments! as List)[0],roomName: (arguments as List)[1],),
+        ));
+      case Routes.chatRoomScreen:
+        return MaterialPageRoute(builder: (_)=>BlocProvider(
+          create: (context) => getIt<ChatRoomCubit>(),
+          child: ChatRoomScreen(roomId: (arguments! as List)[0], roomName: (arguments as List)[1], currentUserId: arguments[2]),
         ));
       default:
         return null;
