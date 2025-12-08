@@ -11,11 +11,11 @@ class ChatRoomCubit extends Cubit<ChatRoomState> {
   final ChatRepositoryWithCache _repository;
   final WebSocketService _webSocketService;
   final ConnectivityService _connectivityService;
-  
+
   int _currentPage = 1;
   static const int _pageSize = 50;
   int? _currentRoomId;
-  
+
   StreamSubscription<MessageModel>? _messageSubscription;
   StreamSubscription<bool>? _connectionSubscription;
 
@@ -35,25 +35,27 @@ class ChatRoomCubit extends Cubit<ChatRoomState> {
   }
 
   void _initConnectivityListener() {
-    _connectionSubscription = _connectivityService.onConnectivityChanged.listen((isOnline) {
-      if (isOnline) {
-        print('🌐 Back online! Syncing pending messages...');
-        _syncPendingMessages();
-        
-        // Rejoin room if needed
-        if (_currentRoomId != null) {
-          _webSocketService.joinRoom(_currentRoomId!);
+    _connectionSubscription = _connectivityService.onConnectivityChanged.listen(
+      (isOnline) {
+        if (isOnline) {
+          print('🌐 Back online! Syncing pending messages...');
+          _syncPendingMessages();
+
+          // Rejoin room if needed
+          if (_currentRoomId != null) {
+            _webSocketService.joinRoom(_currentRoomId!);
+          }
+        } else {
+          print('📵 Gone offline. Messages will be queued.');
         }
-      } else {
-        print('📵 Gone offline. Messages will be queued.');
-      }
-    });
+      },
+    );
   }
 
   Future<void> _syncPendingMessages() async {
     try {
       await _repository.syncPendingMessages();
-      
+
       // Refresh messages after sync
       if (_currentRoomId != null) {
         await loadMessages(_currentRoomId!, refresh: true);
@@ -68,19 +70,23 @@ class ChatRoomCubit extends Cubit<ChatRoomState> {
     if (currentState is ChatRoomLoaded) {
       if (message.roomId == _currentRoomId) {
         // Check for duplicates
-        final messageExists = currentState.messages.any((m) => m.id == message.id);
+        final messageExists = currentState.messages.any(
+          (m) => m.id == message.id,
+        );
         if (!messageExists) {
           // Remove pending message if this is the synced version
           final updatedMessages = currentState.messages
               .where((m) => m.localId != message.localId || m.id == message.id)
               .toList();
-          
-          emit(ChatRoomLoaded(
-            messages: [message, ...updatedMessages],
-            hasMore: currentState.hasMore,
-            currentPage: currentState.currentPage,
-            isOffline: !_connectivityService.isOnline,
-          ));
+
+          emit(
+            ChatRoomLoaded(
+              messages: [message, ...updatedMessages],
+              hasMore: currentState.hasMore,
+              currentPage: currentState.currentPage,
+              isOffline: !_connectivityService.isOnline,
+            ),
+          );
         }
       }
     }
@@ -93,7 +99,7 @@ class ChatRoomCubit extends Cubit<ChatRoomState> {
     }
 
     _currentRoomId = roomId;
-    
+
     if (_connectivityService.isOnline) {
       _webSocketService.joinRoom(roomId);
     }
@@ -106,12 +112,14 @@ class ChatRoomCubit extends Cubit<ChatRoomState> {
         offset: 0,
       );
       print('✅ Successfully Fetched messages: ${messages.length}');
-      emit(ChatRoomLoaded(
-        messages: messages,
-        hasMore: messages.length >= _pageSize,
-        currentPage: _currentPage,
-        isOffline: !_connectivityService.isOnline,
-      ));
+      emit(
+        ChatRoomLoaded(
+          messages: messages,
+          hasMore: messages.length >= _pageSize,
+          currentPage: _currentPage,
+          isOffline: !_connectivityService.isOnline,
+        ),
+      );
     } catch (e) {
       emit(ChatRoomError(e.toString()));
     }
@@ -133,24 +141,32 @@ class ChatRoomCubit extends Cubit<ChatRoomState> {
 
       _currentPage++;
 
-      emit(ChatRoomLoaded(
-        messages: [...currentState.messages, ...newMessages],
-        hasMore: newMessages.length >= _pageSize,
-        currentPage: _currentPage,
-        isOffline: !_connectivityService.isOnline,
-      ));
+      emit(
+        ChatRoomLoaded(
+          messages: [...currentState.messages, ...newMessages],
+          hasMore: newMessages.length >= _pageSize,
+          currentPage: _currentPage,
+          isOffline: !_connectivityService.isOnline,
+        ),
+      );
     } catch (e) {
       emit(currentState);
     }
   }
+
   Future<void> editMessage(int roomId, int messageId, String content) async {
-  try {
-    await _repository.editMessage(roomId, messageId, content);
-  } catch (e) {
-    print('Error editing message: $e');
+    try {
+      await _repository.editMessage(roomId, messageId, content);
+    } catch (e) {
+      print('Error editing message: $e');
+    }
   }
-}
-  Future<void> sendMessage(int roomId, String content, {int? parentMessageId}) async {
+
+  Future<void> sendMessage(
+    int roomId,
+    String content, {
+    int? parentMessageId,
+  }) async {
     if (content.trim().isEmpty) return;
 
     final currentState = state;
@@ -164,15 +180,20 @@ class ChatRoomCubit extends Cubit<ChatRoomState> {
 
       // This will either send or queue the message
       final message = await _repository.sendMessage(roomId, request);
-      
+      if(message.id == 0) {
+        print('✅ Message already sent from cubit, skipping');
+        return;
+      }
       // Add message to UI immediately (even if pending)
       if (currentState is ChatRoomLoaded) {
-        emit(ChatRoomLoaded(
-          messages: [ ...currentState.messages, message ],
-          hasMore: currentState.hasMore,
-          currentPage: currentState.currentPage,
-          isOffline: !_connectivityService.isOnline,
-        ));
+        emit(
+          ChatRoomLoaded(
+            messages: [...currentState.messages, message],
+            hasMore: currentState.hasMore,
+            currentPage: currentState.currentPage,
+            isOffline: !_connectivityService.isOnline,
+          ),
+        );
       }
 
       // Show toast if offline
@@ -183,6 +204,10 @@ class ChatRoomCubit extends Cubit<ChatRoomState> {
         }
       }
     } catch (e) {
+      if (e.toString().contains('409')) {
+        print('✅ Message already sent, skipping');
+        emit(DuplicateMessage('Message already sent'));
+      } 
       if (currentState is ChatRoomLoaded) {
         emit(currentState);
       }
@@ -201,12 +226,14 @@ class ChatRoomCubit extends Cubit<ChatRoomState> {
             .where((m) => m.id != messageId)
             .toList();
 
-        emit(ChatRoomLoaded(
-          messages: updatedMessages,
-          hasMore: currentState.hasMore,
-          currentPage: currentState.currentPage,
-          isOffline: !_connectivityService.isOnline,
-        ));
+        emit(
+          ChatRoomLoaded(
+            messages: updatedMessages,
+            hasMore: currentState.hasMore,
+            currentPage: currentState.currentPage,
+            isOffline: !_connectivityService.isOnline,
+          ),
+        );
       }
     } catch (e) {
       if (currentState is ChatRoomLoaded) {

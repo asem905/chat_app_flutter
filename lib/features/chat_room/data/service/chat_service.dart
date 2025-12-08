@@ -56,21 +56,33 @@ class ChatRoomService {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
         'Authorization': 'Bearer $token',
+        'idempotency-token': request.idempotencyToken
       },
       body: jsonEncode(request.toJson()),
     );
-
+    print('response.statusCode: ${response.statusCode}');
     try {
       if (response.statusCode == 200 || response.statusCode == 201) {
         final Map<String, dynamic> responseData = jsonDecode(response.body);
         final messageJson = responseData['data'];
         return MessageModel.fromJson(messageJson, currentUserId);
       } else {
-        throw Exception('Failed to send message: ${response.statusCode}');
+        if(response.statusCode == 409) {
+          print('✅ Message already sent, skipping');
+          return MessageModel(content: request.content, id: 0, createdAt: DateTime.now(), parentMessageId: request.parentMessageId, roomId: 0, userId: 0, isMine: 0);
+        }else{
+          throw Exception('Failed to send message: ${response.statusCode}');
+        }
+        
       }
     } catch (e) {
-      print('Error sending message: ${e.toString()}');
-      throw Exception('Failed to send message: ${e.toString()}');
+      if(e.toString().contains('409')) {
+        print('✅ Message already sent, skipping');
+        return MessageModel(content: request.content, id: 0, createdAt: DateTime.now(), parentMessageId: request.parentMessageId, roomId: 0, userId: 0, isMine: 0);
+      }else{
+        print('Error sending message: ${e.toString()}');
+        throw Exception('Failed to send message: ${e.toString()}');
+      }
     }
   }
 

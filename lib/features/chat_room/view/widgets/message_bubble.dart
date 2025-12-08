@@ -24,53 +24,63 @@ class MessageBubble extends StatelessWidget {
     this.onReply,
     this.showAvatar = true,
     this.currentUserId,
-    this.isPending = false, // ✅ NEW - defaults to false for backward compatibility
+    this.isPending =
+        false, // ✅ NEW - defaults to false for backward compatibility
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    print("current user id: ${message.userId == (currentUserId) ? "You" : message.username}");
-    
+    print(
+      "current user id: ${message.userId == (currentUserId) ? "You" : message.username}",
+    );
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Row(
-        mainAxisAlignment:
-            message.isMine==1 ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: message.isMine == 1
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          if (!(message.isMine==1? true : false) && showAvatar) ...[
+          if (!(message.isMine == 1 ? true : false) && showAvatar) ...[
             AvatarWidget(
               imageUrl: null,
-              name: message.userId == (currentUserId) ? "You" : message.username!,
+              name: message.userId == (currentUserId)
+                  ? "You"
+                  : message.username!,
               size: 32,
             ),
             const SizedBox(width: 8),
-          ] else if (!(message.isMine==1? true : false) && !showAvatar)
+          ] else if (!(message.isMine == 1 ? true : false) && !showAvatar)
             const SizedBox(width: 40),
-          
+
           Flexible(
             child: GestureDetector(
-              onLongPress: !(message.isMine==1? true : false)
-                  ? () => _showMessageOptions(context)
-                  : null,
+              onLongPress: () => _showMessageOptions(context, message.isMine),
               child: Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 12,
                 ),
                 decoration: BoxDecoration(
-                  color: message.isDeleted==1
+                  color: message.isDeleted == 1
                       ? AppColors.border
-                      : (message.isMine==1? true : false)
-                          ? (isPending 
-                              ? AppColors.primary.withOpacity(0.7) // ✅ Dimmed when pending
-                              : AppColors.primary)
-                          : AppColors.surface,
+                      : (message.isMine == 1 ? true : false)
+                      ? (isPending
+                            ? AppColors.primary.withOpacity(
+                                0.7,
+                              ) // ✅ Dimmed when pending
+                            : AppColors.primary)
+                      : AppColors.surface,
                   borderRadius: BorderRadius.only(
                     topLeft: const Radius.circular(16),
                     topRight: const Radius.circular(16),
-                    bottomLeft: Radius.circular((message.isMine==1? true : false) ? 16 : 4),
-                    bottomRight: Radius.circular((message.isMine==1? true : false) ? 4 : 16),
+                    bottomLeft: Radius.circular(
+                      (message.isMine == 1 ? true : false) ? 16 : 4,
+                    ),
+                    bottomRight: Radius.circular(
+                      (message.isMine == 1 ? true : false) ? 4 : 16,
+                    ),
                   ),
                   boxShadow: [
                     BoxShadow(
@@ -83,9 +93,12 @@ class MessageBubble extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (!(message.isMine==1? true : false) && showAvatar) ...[
+                    if (!(message.isMine == 1 ? true : false) &&
+                        showAvatar) ...[
                       Text(
-                        message.userId == currentUserId ? "You" : message.username!,
+                        message.userId == currentUserId
+                            ? "You"
+                            : message.username!,
                         style: AppTextStyles.bodyMedium.copyWith(
                           fontWeight: FontWeight.bold,
                           color: AppColors.primary,
@@ -95,22 +108,24 @@ class MessageBubble extends StatelessWidget {
                       const SizedBox(height: 4),
                     ],
                     Text(
-                      message.isDeleted==1
+                      message.isDeleted == 1
                           ? 'This message was deleted'
                           : message.content,
                       style: AppTextStyles.bodyLarge.copyWith(
-                        color: message.isDeleted==1
+                        color: message.isDeleted == 1
                             ? AppColors.textSecondary
-                            : (message.isMine==1? true : false)
-                                ? Colors.white
-                                : AppColors.textPrimary,
-                        fontStyle: message.isDeleted==1 ? FontStyle.italic : null,
+                            : (message.isMine == 1 ? true : false)
+                            ? Colors.white
+                            : AppColors.textPrimary,
+                        fontStyle: message.isDeleted == 1
+                            ? FontStyle.italic
+                            : null,
                         fontSize: 15,
                       ),
                     ),
-                    
+
                     const SizedBox(height: 4),
-                    
+
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -118,27 +133,29 @@ class MessageBubble extends StatelessWidget {
                           timeago.format(message.createdAt, locale: 'en_short'),
                           style: AppTextStyles.bodyMedium.copyWith(
                             fontSize: 11,
-                            color: (message.isMine==1? true : false)
+                            color: (message.isMine == 1 ? true : false)
                                 ? Colors.white.withOpacity(0.8)
                                 : AppColors.textSecondary,
                           ),
                         ),
-                        if ((message.isEdited==1? true : false) && !(message.isDeleted==1)) ...[
+                        if ((message.isEdited == 1 ? true : false) &&
+                            !(message.isDeleted == 1)) ...[
                           const SizedBox(width: 4),
                           Text(
                             '(edited)',
                             style: AppTextStyles.bodyMedium.copyWith(
                               fontSize: 11,
                               fontStyle: FontStyle.italic,
-                              color: (message.isMine==1? true : false)
+                              color: (message.isMine == 1 ? true : false)
                                   ? Colors.white.withOpacity(0.7)
                                   : AppColors.textSecondary,
                             ),
                           ),
                         ],
-                        
+
                         // ✅ NEW: Status indicator for sent messages
-                        if ((message.isMine==1? true : false) && !(message.isDeleted==1)) ...[
+                        if ((message.isMine == 1 ? true : false) &&
+                            !(message.isDeleted == 1)) ...[
                           const SizedBox(width: 6),
                           if (isPending)
                             Icon(
@@ -160,64 +177,71 @@ class MessageBubble extends StatelessWidget {
               ),
             ),
           ),
-          
-          if ((message.isMine==1? true : false) && showAvatar) ...[
+
+          if ((message.isMine == 1 ? true : false) && showAvatar) ...[
             const SizedBox(width: 8),
             AvatarWidget(
               imageUrl: null,
-              name: message.userId == (currentUserId) ? "You" : message.username!,
+              name: message.userId == (currentUserId)
+                  ? "You"
+                  : message.username!,
               size: 32,
             ),
-          ] else if ((message.isMine==1? true : false) && !showAvatar)
+          ] else if ((message.isMine == 1 ? true : false) && !showAvatar)
             const SizedBox(width: 40),
         ],
       ),
     );
   }
 
-  void _showMessageOptions(BuildContext context) {
-    if (message.isDeleted == 1) return;
+  void _showMessageOptions(BuildContext context, isMine) {
+  if (message.isDeleted == 1) return;
 
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => Container(
-        padding: const EdgeInsets.symmetric(vertical: 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (onReply != null)
-              ListTile(
-                leading: const Icon(Icons.reply, color: AppColors.primary),
-                title: const Text('Reply'),
-                onTap: () {
-                  Navigator.pop(context);
-                  onReply!();
-                },
-              ),
-            if (onEdit != null)
+  final replyCallback = onReply;
+  final editCallback = onEdit;
+  final deleteCallback = onDelete;
+
+  showModalBottomSheet(
+    context: context,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (bottomSheetContext) => Container(
+      padding: const EdgeInsets.symmetric(vertical: 20),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (replyCallback != null)
+            ListTile(
+              leading: const Icon(Icons.reply, color: AppColors.primary),
+              title: const Text('Reply'),
+              onTap: () {
+                Navigator.pop(bottomSheetContext); 
+                replyCallback(); 
+              },
+            ),
+          if (isMine != 1)
+            if (editCallback != null)
               ListTile(
                 leading: const Icon(Icons.edit, color: AppColors.primary),
                 title: const Text('Edit'),
                 onTap: () {
-                  Navigator.pop(context);
-                  onEdit!();
+                  Navigator.pop(bottomSheetContext); 
+                  editCallback(); 
                 },
               ),
-            if (onDelete != null)
-              ListTile(
-                leading: const Icon(Icons.delete, color: AppColors.error),
-                title: const Text('Delete'),
-                onTap: () {
-                  Navigator.pop(context);
-                  onDelete!();
-                },
-              ),
-          ],
-        ),
+          if (deleteCallback != null)
+            ListTile(
+              leading: const Icon(Icons.delete, color: AppColors.error),
+              title: const Text('Delete'),
+              onTap: () {
+                Navigator.pop(bottomSheetContext); 
+                deleteCallback(); 
+              },
+            ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
 }

@@ -91,12 +91,19 @@ class ChatRepositoryWithCache {
       try {
         // Try to send immediately
         final message = await _service.sendMessage(roomId, request);
-
         // Cache the sent message
+        if(message.id == 0){
+          print('✅ Message already sent from repo, skipping');
+          return MessageModel(content: request.content, id: 0, createdAt: DateTime.now(), parentMessageId: request.parentMessageId, roomId: 0, userId: 0, isMine: 0);
+        }
         await _database.insertMessage(message.toJson());
 
         return message;
       } catch (e) {
+        if(e.toString().contains('409')){
+          print('✅ Message already sent, skipping');
+          throw Exception('Duplicate message2');
+        }
         print('Failed to send message, adding to queue: $e');
         // If sending fails, queue it
         return await _queueMessage(roomId, request);

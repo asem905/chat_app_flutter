@@ -104,3 +104,10 @@ class MessageQueued extends ChatRoomState {
   @override
   List<Object> get props => [message];
 }
+
+class DuplicateMessage extends ChatRoomState {
+  final String message;
+  DuplicateMessage(this.message);
+  @override
+  List<Object> get props => [message];
+}

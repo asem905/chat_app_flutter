@@ -99,7 +99,6 @@ class ChatDatabase {
   Future<void> insertMessages(List<Map<String, dynamic>> messages) async {
     final db = await database;
     final batch = db.batch();
-    
     for (var message in messages) {
       batch.insert(
         'messages',

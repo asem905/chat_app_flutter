@@ -31,18 +31,26 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   final FocusNode _messageFocusNode = FocusNode();
   MessageModel? _replyingTo;
   MessageModel? _editingMessage;
-
+  late final ChatRoomCubit _chatRoomCubit;
+  /*
+   ** The problem of context being changed has been solved by **:
+   1-Store the cubit reference in initState using late final
+   2-Use the stored _chatRoomCubit reference everywhere instead of context.read<ChatRoomCubit>()
+   3-This way, the callbacks don't depend on ****context**** at all
+   4-Explicitly pass bloc: _chatRoomCubit to BlocConsumer
+  */
   @override
   void initState() {
     super.initState();
-    context.read<ChatRoomCubit>().loadMessages(widget.roomId);
+    _chatRoomCubit = context.read<ChatRoomCubit>();
+    _chatRoomCubit.loadMessages(widget.roomId);
     _scrollController.addListener(_onScroll);
   }
 
   void _onScroll() {
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
-      context.read<ChatRoomCubit>().loadMoreMessages(widget.roomId);
+      _chatRoomCubit.loadMoreMessages(widget.roomId); 
     }
   }
 
@@ -59,14 +67,14 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     if (content.isEmpty) return;
 
     if (_editingMessage != null) {
-      context.read<ChatRoomCubit>().editMessage(
+      _chatRoomCubit.editMessage(
         widget.roomId,
         _editingMessage!.id,
         content,
       );
       _cancelEdit();
     } else {
-      context.read<ChatRoomCubit>().sendMessage(
+      _chatRoomCubit.sendMessage(
         widget.roomId,
         content,
         parentMessageId: _replyingTo?.id,
@@ -108,18 +116,18 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   void _deleteMessage(int messageId) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Delete Message'),
         content: const Text('Are you sure you want to delete this message?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () {
-              Navigator.pop(context);
-              context.read<ChatRoomCubit>().deleteMessage(
+              Navigator.pop(dialogContext);
+              _chatRoomCubit.deleteMessage(
                 widget.roomId,
                 messageId,
               );
@@ -139,8 +147,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         children: [
           Expanded(
             child: BlocConsumer<ChatRoomCubit, ChatRoomState>(
+              bloc: _chatRoomCubit,
               listener: (context, state) {
-                // ✅ NEW: Handle queued messages
                 if (state is MessageQueued) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -195,14 +203,33 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                       duration: const Duration(seconds: 3),
                     ),
                   );
+                } else if (state is DuplicateMessage) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Row(
+                        children: [
+                          const Icon(
+                            Icons.error_outline,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(child: Text(state.message)),
+                        ],
+                      ),
+                      backgroundColor: Colors.red,
+                      duration: const Duration(seconds: 3),
+                    ),
+                  );
                 }
               },
               builder: (context, state) {
                 if (state is ChatRoomLoading) {
                   return const Center(child: CircularProgressIndicator());
                 }
-
-                if (state is ChatRoomLoaded || state is ChatRoomLoadingMore) {
+                if (state is ChatRoomLoaded ||
+                    state is ChatRoomLoadingMore ||
+                    state is DuplicateMessage) {
                   final messages = state is ChatRoomLoaded
                       ? state.messages
                       : (state as ChatRoomLoadingMore).currentMessages;
@@ -257,7 +284,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                       Expanded(
                         child: RefreshIndicator(
                           onRefresh: () async {
-                            await context.read<ChatRoomCubit>().loadMessages(
+                            await _chatRoomCubit.loadMessages(
                               widget.roomId,
                               refresh: true,
                             );
@@ -298,8 +325,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                     onEdit: () => _startEdit(message),
                                     onDelete: () => _deleteMessage(message.id),
                                     currentUserId: widget.currentUserId,
-                                    isPending: message
-                                        .isPending==1, // ✅ Show pending state
+                                    isPending: message.isPending == 1,
                                   ),
                                 ],
                               );
