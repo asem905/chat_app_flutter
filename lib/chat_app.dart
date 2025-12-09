@@ -6,21 +6,28 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 class ChatApp extends StatelessWidget {
   final AppRouter appRouter;
   final bool isLoggedInUser;
-  const ChatApp({super.key, required this.appRouter, this.isLoggedInUser = false});
+  final GlobalKey<NavigatorState> navigatorKey;
+  
+  const ChatApp({
+    super.key,
+    required this.appRouter,
+    required this.navigatorKey,
+    this.isLoggedInUser = false,
+  });
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-     return ScreenUtilInit(
+    return ScreenUtilInit(
       minTextAdapt: true,
       designSize: const Size(375, 812),
       child: MaterialApp(
+        navigatorKey: navigatorKey, // Important for navigation from anywhere
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           scaffoldBackgroundColor: Colors.white,
         ),
         onGenerateRoute: appRouter.generateRoute,
-        initialRoute:isLoggedInUser ? Routes.homeScreen : Routes.loginScreen,
+        initialRoute: isLoggedInUser ? Routes.homeScreen : Routes.loginScreen,
       ),
     );
   }

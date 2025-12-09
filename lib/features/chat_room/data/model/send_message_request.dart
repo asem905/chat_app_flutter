@@ -18,6 +18,7 @@ class SendMessageRequest {
     // Generate deterministic token from content + room + timestamp
     final timestamp = DateTime.now().minute;
     final data = '$content-$roomId-$timestamp';
+    print('data: $data');
     return sha256.convert(utf8.encode(data)).toString();
   }
 

@@ -3,6 +3,7 @@ import 'package:chat_app/core/helpers/extensions.dart';
 import 'package:chat_app/core/helpers/nav_helper.dart';
 import 'package:chat_app/core/helpers/shared_pref_helper.dart';
 import 'package:chat_app/core/routing/routes.dart';
+import 'package:chat_app/core/services/token_manager_service.dart';
 import 'package:chat_app/features/home/logic/cubit/home_cubit.dart';
 import 'package:chat_app/features/home/logic/cubit/home_state.dart';
 import 'package:chat_app/features/home/view/widgets/create_room_dialog.dart';
@@ -125,6 +126,14 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: const Icon(Icons.list, color: AppColors.textPrimary),
             onPressed: () {
               context.pushNamed(Routes.discoverRoomsScreen);
+            },
+          ),
+          //logout button
+          IconButton(
+            icon: const Icon(Icons.logout, color: AppColors.textPrimary),
+            onPressed: () async{
+              await TokenManager().clearToken();
+              context.pushNamed(Routes.loginScreen);
             },
           ),
         ],

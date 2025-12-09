@@ -9,6 +9,7 @@ import '../../../../core/widgets/avatar_widget.dart';
 
 class MessageBubble extends StatelessWidget {
   final MessageModel message;
+  final MessageModel? parentMessage;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
   final VoidCallback? onReply;
@@ -19,6 +20,7 @@ class MessageBubble extends StatelessWidget {
   const MessageBubble({
     Key? key,
     required this.message,
+    this.parentMessage,
     this.onEdit,
     this.onDelete,
     this.onReply,
@@ -102,6 +104,18 @@ class MessageBubble extends StatelessWidget {
                         style: AppTextStyles.bodyMedium.copyWith(
                           fontWeight: FontWeight.bold,
                           color: AppColors.primary,
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                    ],
+                    //putting message we replyed to above my message to make it easier to see
+                    if(message.parentMessageId != null && message.parentMessageId != 0 && parentMessage != null) ...[
+                      Text(
+                        'replied to: ${parentMessage?.content}',
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: message.isMine == 1 ? Colors.white70 : AppColors.primary.withOpacity(0.8),
                           fontSize: 13,
                         ),
                       ),

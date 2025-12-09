@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:chat_app/features/chat_room/logic/cubit/chat_state.dart';
 import 'package:chat_app/features/chat_room/data/model/message_model.dart';
-
+import 'package:collection/collection.dart';
 class ChatRoomScreen extends StatefulWidget {
   final int roomId;
   final String roomName;
@@ -326,6 +326,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                     onDelete: () => _deleteMessage(message.id),
                                     currentUserId: widget.currentUserId,
                                     isPending: message.isPending == 1,
+                                    parentMessage: messages
+                                        .firstWhereOrNull((m) => m.id == message.parentMessageId),
                                   ),
                                 ],
                               );
