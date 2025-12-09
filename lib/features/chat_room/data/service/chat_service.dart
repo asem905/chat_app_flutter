@@ -95,7 +95,7 @@ class ChatRoomService {
     final token = result['token'];
     final currentUserId = await result['currentUserId'];
     final response = await http.put(
-      Uri.parse("${ApiConstants.rooms}/$messageId"),
+      Uri.parse("${ApiConstants.rooms}/$roomId/messages/$messageId"),
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',

@@ -109,6 +109,15 @@ class ChatDatabase {
     
     await batch.commit(noResult: true);
   }
+  Future<void> updateMessage(Map<String, dynamic> message) async {
+    final db = await database;
+    await db.update(
+      'messages',
+      message,
+      where: 'id = ?',
+      whereArgs: [message['id']],
+    );
+  }
 
   Future<List<Map<String, dynamic>>> getMessages(
     int roomId, {

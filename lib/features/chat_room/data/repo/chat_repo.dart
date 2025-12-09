@@ -219,7 +219,22 @@ class ChatRepositoryWithCache {
   }
   // ==================== Edit Message ====================
 
-  Future<void> editMessage(int roomId, int messageId, String content) async {
-    
+  Future<MessageModel> editMessage(int roomId, int messageId, String content) async {
+    if (_connectivityService.isOnline) {
+      try {
+        // Try to send immediately
+        final message = await _service.editMessage(roomId, messageId, content);
+        await _database.updateMessage(message.toJson());
+
+        return message;
+      } catch (e) {
+        print('Failed to send message, adding to queue: $e');
+        // If sending fails, queue it
+        return await _queueMessage(roomId, SendMessageRequest(roomId: roomId,content: content, parentMessageId: 0));
+      }
+    } else {
+      // If offline, queue the message
+      return await _queueMessage(roomId, SendMessageRequest(roomId: roomId,content: content, parentMessageId: 0));
+    }
   }
 }

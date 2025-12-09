@@ -220,7 +220,7 @@ class MessageBubble extends StatelessWidget {
                 replyCallback(); 
               },
             ),
-          if (isMine != 1)
+          if (isMine == 1)
             if (editCallback != null)
               ListTile(
                 leading: const Icon(Icons.edit, color: AppColors.primary),

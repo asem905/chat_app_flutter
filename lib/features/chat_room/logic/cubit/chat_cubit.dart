@@ -156,7 +156,29 @@ class ChatRoomCubit extends Cubit<ChatRoomState> {
 
   Future<void> editMessage(int roomId, int messageId, String content) async {
     try {
-      await _repository.editMessage(roomId, messageId, content);
+      final currentState = state;
+      var message = await _repository.editMessage(roomId, messageId, content);
+      print('==================Successfully edited message: $message');
+      if (currentState is ChatRoomLoaded) {
+        emit(
+          ChatRoomLoaded(
+            messages: currentState.messages
+                .map((m) => m.id == message.id ? message : m)
+                .toList(),
+            hasMore: currentState.hasMore,
+            currentPage: currentState.currentPage,
+            isOffline: !_connectivityService.isOnline,
+          ),
+        );
+      }
+
+      // Show toast if offline
+      if (!_connectivityService.isOnline) {
+        emit(MessageQueued('Message will be automatically edited when online'));
+        if (currentState is ChatRoomLoaded) {
+          emit(currentState);
+        }
+      }
     } catch (e) {
       print('Error editing message: $e');
     }
