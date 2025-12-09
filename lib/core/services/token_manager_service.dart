@@ -16,7 +16,7 @@ class TokenManager {
     _onTokenExpired = onTokenExpired;
   }
 
-  Future<void> saveToken(String token, {Duration validity = const Duration(minutes: 10)}) async {
+  Future<void> saveToken(String token, {Duration validity = const Duration(hours: 1)}) async {
     cancelTimer();
 
 
@@ -32,7 +32,7 @@ class TokenManager {
     
     print("Token saved. Expires at: $_tokenExpirationTime");
   }
-
+  //i can navigate to login screen from any screen when token expires due to global navigator key i passed to main 
   void _startExpirationTimer(Duration duration) {
     _expirationTimer = Timer(duration, () async {
       print("Token expired - logging out user");
@@ -96,7 +96,7 @@ class TokenManager {
   }
 
   /// Extend token validity (call after successful API request)
-  Future<void> extendToken({Duration extension = const Duration(minutes: 10)}) async {
+  Future<void> extendToken({Duration extension = const Duration(hours: 1)}) async {
     if (_tokenExpirationTime == null) return;
     
     cancelTimer();

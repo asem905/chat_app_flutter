@@ -29,7 +29,7 @@ class LoginCubit extends Cubit<LoginState> {
       // Save token with expiration handling
       await TokenManager().saveToken(
         token,
-        validity: const Duration(minutes: 10),
+        validity: const Duration(hours: 1),
       );
       
       emit(LoginSuccess(response));
