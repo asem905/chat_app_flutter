@@ -1,3 +1,4 @@
+import 'package:chat_app/core/helpers/get_token.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
@@ -161,7 +162,7 @@ class ChatDatabase {
     int? parentMessageId,
   }) async {
     final db = await database;
-    final localId = '${DateTime.now().millisecondsSinceEpoch}_${roomId}';
+    final localId = '${DateTime.now().millisecondsSinceEpoch}_$roomId';
     
     await db.insert('pending_messages', {
       'local_id': localId,
@@ -229,8 +230,12 @@ class ChatDatabase {
 
   Future<List<Map<String, dynamic>>> getRooms() async {
     final db = await database;
+    final currentUser=await getTokenAndCurrentUserId();
+    final currentUserId=currentUser['currentUserId'];
+    print("currentUserId to cache rooms : $currentUserId");
     return await db.query(
       'rooms',
+      distinct: true,
       orderBy: 'updatedAt DESC',
     );
   }

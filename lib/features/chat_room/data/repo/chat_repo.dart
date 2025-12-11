@@ -197,7 +197,7 @@ class ChatRepositoryWithCache {
 
   // ==================== DELETE MESSAGE ====================
 
-  Future<void> deleteMessage(int roomId, int messageId) async {
+  Future deleteMessage(int roomId, int messageId) async {
     // Delete from cache immediately
     await _database.deleteMessage(messageId);
 
@@ -206,8 +206,7 @@ class ChatRepositoryWithCache {
       try {
         await _service.deleteMessage(roomId, messageId);
       } catch (e) {
-        print('Failed to delete message from server: $e');
-        // You might want to queue deletion for later
+        throw Exception(e.toString());
       }
     }
   }

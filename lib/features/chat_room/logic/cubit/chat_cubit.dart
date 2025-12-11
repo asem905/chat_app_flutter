@@ -261,7 +261,8 @@ class ChatRoomCubit extends Cubit<ChatRoomState> {
       if (currentState is ChatRoomLoaded) {
         emit(currentState);
       }
-      emit(ChatRoomError(e.toString()));
+      print('Error deleting message from cubit: $e');
+      emit(ChatRoomError(e.toString().split(':')[2]));
     }
   }
 

@@ -86,7 +86,7 @@ class _DiscoverRoomsScreenState extends State<DiscoverRoomsScreen> {
                     const Icon(Icons.check_circle, color: Colors.white),
                     SizedBox(width: 12.w),
                     Expanded(
-                      child: Text('Successfully joined "${state.roomName}"!'),
+                      child: Text('Successfully sent request to join "${state.roomName}"!'),
                     ),
                   ],
                 ),

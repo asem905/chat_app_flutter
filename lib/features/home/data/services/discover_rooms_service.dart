@@ -30,11 +30,20 @@ class DiscoverRoomsService {
   }
 
   Future<void> joinRoom(int roomId) async {
-    // Replace with actual API call
-    // await _dio.post('/api/rooms/$roomId/join');
-
-    // Simulated response
-    await Future.delayed(const Duration(seconds: 1));
-    // Success - no return needed
+    final result = await getTokenAndCurrentUserId();
+    final token = result['token'];
+    final response = await http.get(
+      Uri.parse("${ApiConstants.rooms}/$roomId/join"),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        "Authorization": "Bearer $token",
+      },
+    );
+    if (response.statusCode == 200) {
+      // Success - no return needed
+    } else {
+      throw Exception('Failed to join room');
+    }
   }
 }

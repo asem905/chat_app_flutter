@@ -1,5 +1,6 @@
 import 'package:chat_app/chat_app.dart';
 import 'package:chat_app/core/di/dependency_incjection.dart.dart';
+import 'package:chat_app/core/networking/api_constants.dart';
 import 'package:chat_app/core/routing/app_router.dart';
 import 'package:chat_app/core/routing/routes.dart';
 import 'package:chat_app/core/services/token_manager_service.dart';
@@ -14,6 +15,9 @@ void main() async {
   setUpGetIt();
   await ScreenUtil.ensureScreenSize();
   
+  // Initialize API and discover server
+  print('🚀 Starting app...');
+  await ApiConstants.initialize();
   // Initialize token manager with logout callback
   TokenManager().initialize(() {
     // Navigate to login when token expires

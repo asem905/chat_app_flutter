@@ -24,6 +24,7 @@ class HomeService {
         Uri.parse(ApiConstants.myRooms),
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
           'Authorization': 'Bearer $token',
         },
       );

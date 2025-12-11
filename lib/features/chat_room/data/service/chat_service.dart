@@ -34,7 +34,7 @@ class ChatRoomService {
             .map((json) => MessageModel.fromJson(json, currentUserId))
             .toList();
       } else {
-        throw Exception('Failed to fetch messages: ${response.statusCode}');
+        throw Exception('Failed to fetch messages: ');
       }
     } catch (e) {
       print('Error fetching messages: ${e.toString()}');
@@ -46,7 +46,9 @@ class ChatRoomService {
     int roomId,
     SendMessageRequest request,
   ) async {
-    print('roomId: $roomId, request: ${request.content} and parentMessageId: ${request.parentMessageId} and roomId: ${request.roomId}');
+    print(
+      'roomId: $roomId, request: ${request.content} and parentMessageId: ${request.parentMessageId} and roomId: ${request.roomId}',
+    );
     final result = await getTokenAndCurrentUserId();
     final token = result['token'];
     final currentUserId = await result['currentUserId'];
@@ -56,7 +58,7 @@ class ChatRoomService {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
         'Authorization': 'Bearer $token',
-        'idempotency-token': request.idempotencyToken
+        'idempotency-token': request.idempotencyToken,
       },
       body: jsonEncode(request.toJson()),
     );
@@ -67,19 +69,34 @@ class ChatRoomService {
         final messageJson = responseData['data'];
         return MessageModel.fromJson(messageJson, currentUserId);
       } else {
-        if(response.statusCode == 409) {
+        if (response.statusCode == 409) {
           print('✅ Message already sent, skipping');
-          return MessageModel(content: request.content, id: 0, createdAt: DateTime.now(), parentMessageId: request.parentMessageId, roomId: 0, userId: 0, isMine: 0);
-        }else{
+          return MessageModel(
+            content: request.content,
+            id: 0,
+            createdAt: DateTime.now(),
+            parentMessageId: request.parentMessageId,
+            roomId: 0,
+            userId: 0,
+            isMine: 0,
+          );
+        } else {
           throw Exception('Failed to send message: ${response.statusCode}');
         }
-        
       }
     } catch (e) {
-      if(e.toString().contains('409')) {
+      if (e.toString().contains('409')) {
         print('✅ Message already sent, skipping');
-        return MessageModel(content: request.content, id: 0, createdAt: DateTime.now(), parentMessageId: request.parentMessageId, roomId: 0, userId: 0, isMine: 0);
-      }else{
+        return MessageModel(
+          content: request.content,
+          id: 0,
+          createdAt: DateTime.now(),
+          parentMessageId: request.parentMessageId,
+          roomId: 0,
+          userId: 0,
+          isMine: 0,
+        );
+      } else {
         print('Error sending message: ${e.toString()}');
         throw Exception('Failed to send message: ${e.toString()}');
       }
@@ -135,11 +152,26 @@ class ChatRoomService {
         // Success - no return needed
         print('Message $messageId deleted successfully');
       } else {
-        throw Exception('Failed to delete message: ${response.statusCode}');
+        if (response.statusCode == 401) {
+          throw Exception(
+            'Unauthorized to delete message',
+          );
+        } else if (response.statusCode == 404) {
+          throw Exception('Message not found');
+        } else {
+          throw Exception('Failed to delete message');
+        }
       }
     } catch (e) {
-      print('Error deleting message: ${e.toString()}');
-      throw Exception('Failed to delete message: ${e.toString()}');
+      if (response.statusCode == 401) {
+        throw Exception(
+          'Unauthorized to delete message',
+        );
+      } else if (response.statusCode == 404) {
+        throw Exception('Message not found');
+      } else {
+        throw Exception('Failed to delete message ${e.toString()}');
+      }
     }
   }
 }
