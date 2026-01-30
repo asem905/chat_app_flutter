@@ -15,9 +15,15 @@ class ChatRoomCubit extends Cubit<ChatRoomState> {
   int _currentPage = 1;
   static const int _pageSize = 50;
   int? _currentRoomId;
+  int? _currentUserId; // ✅ NEW: Store current user ID
 
   StreamSubscription<MessageModel>? _messageSubscription;
   StreamSubscription<bool>? _connectionSubscription;
+  StreamSubscription<Map<String, dynamic>>? _typingSubscription;
+
+  Timer? _typingDebounceTimer;
+  Timer? _typingStopTimer;
+  DateTime? _lastTypingEmit;
 
   ChatRoomCubit(
     this._repository,
@@ -32,6 +38,10 @@ class ChatRoomCubit extends Cubit<ChatRoomState> {
     _messageSubscription = _webSocketService.onNewMessage.listen((message) {
       _handleNewMessage(message);
     });
+
+    _typingSubscription = _webSocketService.onTyping.listen((data) {
+      _handleTypingEvent(data);
+    });
   }
 
   void _initConnectivityListener() {
@@ -40,7 +50,6 @@ class ChatRoomCubit extends Cubit<ChatRoomState> {
         if (isOnline) {
           print('🌐 Back online! Syncing pending messages...');
           _syncPendingMessages();
-
           // Rejoin room if needed
           if (_currentRoomId != null) {
             _webSocketService.joinRoom(_currentRoomId!);
@@ -85,6 +94,7 @@ class ChatRoomCubit extends Cubit<ChatRoomState> {
               hasMore: currentState.hasMore,
               currentPage: currentState.currentPage,
               isOffline: !_connectivityService.isOnline,
+              typingUsers: currentState.typingUsers,
             ),
           );
         }
@@ -92,13 +102,63 @@ class ChatRoomCubit extends Cubit<ChatRoomState> {
     }
   }
 
-  Future<void> loadMessages(int roomId, {bool refresh = false}) async {
+  void _handleTypingEvent(Map<String, dynamic> data) {
+    final currentState = state;
+    if (currentState is! ChatRoomLoaded) return;
+
+    final userId = data['userId'] as int?;
+    final username = data['username'] as String?;
+    final isTyping = data['isTyping'] as bool? ?? true;
+
+    print(
+      '📝 Typing event received: userId=$userId, username=$username, isTyping=$isTyping, currentUserId=$_currentUserId',
+    );
+
+    if (userId == null) return;
+
+    // ✅ Don't show typing indicator for current user
+    if (userId == _currentUserId) {
+      print('⏭️ Ignoring typing event for current user');
+      return;
+    }
+
+    final updatedTypingUsers = Map<int, String>.from(currentState.typingUsers);
+
+    if (isTyping && username != null) {
+      updatedTypingUsers[userId] = username;
+      print('✅ Added typing user: $username (userId: $userId)');
+    } else {
+      updatedTypingUsers.remove(userId);
+      print('❌ Removed typing user: $username (userId: $userId)');
+    }
+
+    print('👥 Current typing users: ${updatedTypingUsers.values.join(", ")}');
+
+    emit(
+      ChatRoomLoaded(
+        messages: currentState.messages,
+        hasMore: currentState.hasMore,
+        currentPage: currentState.currentPage,
+        isOffline: currentState.isOffline,
+        typingUsers: updatedTypingUsers,
+      ),
+    );
+  }
+
+  Future<void> loadMessages(
+    int roomId, {
+    bool refresh = false,
+    int? currentUserId,
+  }) async {
     if (refresh) {
       _currentPage = 1;
       emit(ChatRoomLoading());
     }
 
     _currentRoomId = roomId;
+    if (currentUserId != null) {
+      _currentUserId = currentUserId; // ✅ Store current user ID
+    }
 
     if (_connectivityService.isOnline) {
       _webSocketService.joinRoom(roomId);
@@ -202,7 +262,7 @@ class ChatRoomCubit extends Cubit<ChatRoomState> {
 
       // This will either send or queue the message
       final message = await _repository.sendMessage(roomId, request);
-      if(message.id == 0) {
+      if (message.id == 0) {
         print('✅ Message already sent from cubit, skipping');
         return;
       }
@@ -229,7 +289,7 @@ class ChatRoomCubit extends Cubit<ChatRoomState> {
       if (e.toString().contains('409')) {
         print('✅ Message already sent, skipping');
         emit(DuplicateMessage('Message already sent'));
-      } 
+      }
       if (currentState is ChatRoomLoaded) {
         emit(currentState);
       }
@@ -269,7 +329,38 @@ class ChatRoomCubit extends Cubit<ChatRoomState> {
   void leaveRoom() {
     if (_currentRoomId != null) {
       _webSocketService.leaveRoom(_currentRoomId!);
+      _webSocketService.emitStopTyping(_currentRoomId!);
       _currentRoomId = null;
+    }
+  }
+
+  void startTyping(int roomId, String username) {
+    if (!_connectivityService.isOnline) return;
+
+    final now = DateTime.now();
+    // Debounce: only emit once every 2 seconds
+    if (_lastTypingEmit != null &&
+        now.difference(_lastTypingEmit!).inSeconds < 2) {
+      return;
+    }
+    print(
+      'user(in start typing function) $username is typing in room of id $roomId',
+    );
+    _webSocketService.emitTyping(roomId, username);
+    _lastTypingEmit = now;
+
+    // Auto-stop after 3 seconds of inactivity
+    _typingStopTimer?.cancel();
+    _typingStopTimer = Timer(const Duration(seconds: 3), () {
+      stopTyping(roomId, username);
+    });
+  }
+
+  void stopTyping(int roomId, String username) {
+    _typingStopTimer?.cancel();
+    _lastTypingEmit = null;
+    if (_connectivityService.isOnline) {
+      _webSocketService.emitStopTyping(roomId, username: username);
     }
   }
 
@@ -277,6 +368,9 @@ class ChatRoomCubit extends Cubit<ChatRoomState> {
   Future<void> close() {
     _messageSubscription?.cancel();
     _connectionSubscription?.cancel();
+    _typingSubscription?.cancel();
+    _typingDebounceTimer?.cancel();
+    _typingStopTimer?.cancel();
     leaveRoom();
     return super.close();
   }

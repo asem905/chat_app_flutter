@@ -1,4 +1,3 @@
-
 import 'package:chat_app/features/chat_room/data/model/message_model.dart';
 import 'package:equatable/equatable.dart';
 
@@ -78,22 +77,30 @@ class UserTyping extends ChatRoomState {
 }
 
 class UserStoppedTyping extends ChatRoomState {}
-// Add to existing states
+
 class ChatRoomLoaded extends ChatRoomState {
   final List<MessageModel> messages;
   final bool hasMore;
   final int currentPage;
-  final bool isOffline;  // ✅ NEW
+  final bool isOffline; // ✅ NEW
+  final Map<int, String> typingUsers; // userId -> username
 
   ChatRoomLoaded({
     required this.messages,
     required this.hasMore,
     required this.currentPage,
-    this.isOffline = false,  // ✅ NEW
+    this.isOffline = false, // ✅ NEW
+    this.typingUsers = const {}, // ✅ NEW
   });
 
   @override
-  List<Object> get props => [messages, hasMore, currentPage];
+  List<Object> get props => [
+    messages,
+    hasMore,
+    currentPage,
+    isOffline,
+    typingUsers,
+  ];
 }
 
 // ✅ NEW STATE

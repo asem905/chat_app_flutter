@@ -1,26 +1,28 @@
-import 'package:chat_app/core/helpers/extensions.dart';
-import 'package:chat_app/core/routing/routes.dart';
 import 'package:chat_app/features/chat_room/logic/cubit/chat_cubit.dart';
 import 'package:chat_app/features/chat_room/view/widgets/date_divider.dart';
 import 'package:chat_app/features/chat_room/view/widgets/editing_message.dart';
 import 'package:chat_app/features/chat_room/view/widgets/message_bubble.dart';
 import 'package:chat_app/features/chat_room/view/widgets/message_input_bar.dart';
 import 'package:chat_app/features/chat_room/view/widgets/reply_to.dart';
+import 'package:chat_app/features/chat_room/view/widgets/typing_indicator_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:chat_app/features/chat_room/logic/cubit/chat_state.dart';
 import 'package:chat_app/features/chat_room/data/model/message_model.dart';
 import 'package:collection/collection.dart';
+
 class ChatRoomScreen extends StatefulWidget {
   final int roomId;
   final String roomName;
   final int currentUserId;
+  final String userName;
 
   const ChatRoomScreen({
     Key? key,
     required this.roomId,
     required this.roomName,
     required this.currentUserId,
+    required this.userName,
   }) : super(key: key);
 
   @override
@@ -45,14 +47,28 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   void initState() {
     super.initState();
     _chatRoomCubit = context.read<ChatRoomCubit>();
-    _chatRoomCubit.loadMessages(widget.roomId);
+    _chatRoomCubit.loadMessages(
+      widget.roomId,
+      currentUserId: widget.currentUserId,
+    );
     _scrollController.addListener(_onScroll);
+    _messageController.addListener(_onTextChanged);
+  }
+
+  void _onTextChanged() {
+    if (_messageController.text.isNotEmpty) {
+      // Get username from somewhere - you may need to pass it or fetch it
+      // For now, using a placeholder
+      _chatRoomCubit.startTyping(widget.roomId, widget.userName);
+    } else {
+      _chatRoomCubit.stopTyping(widget.roomId, widget.userName);
+    }
   }
 
   void _onScroll() {
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
-      _chatRoomCubit.loadMoreMessages(widget.roomId); 
+      _chatRoomCubit.loadMoreMessages(widget.roomId);
     }
   }
 
@@ -69,11 +85,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     if (content.isEmpty) return;
 
     if (_editingMessage != null) {
-      _chatRoomCubit.editMessage(
-        widget.roomId,
-        _editingMessage!.id,
-        content,
-      );
+      _chatRoomCubit.editMessage(widget.roomId, _editingMessage!.id, content);
       _cancelEdit();
     } else {
       _chatRoomCubit.sendMessage(
@@ -85,6 +97,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     }
 
     _messageController.clear();
+    _chatRoomCubit.stopTyping(widget.roomId, widget.userName);
   }
 
   void _startReply(MessageModel message) {
@@ -129,10 +142,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
           TextButton(
             onPressed: () {
               Navigator.pop(dialogContext);
-              _chatRoomCubit.deleteMessage(
-                widget.roomId,
-                messageId,
-              );
+              _chatRoomCubit.deleteMessage(widget.roomId, messageId);
             },
             child: const Text('Delete', style: TextStyle(color: Colors.red)),
           ),
@@ -229,9 +239,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                 if (state is ChatRoomLoading) {
                   return const Center(child: CircularProgressIndicator());
                 }
-                if (state is ChatRoomLoaded ||
-                    state is ChatRoomLoadingMore ||
-                    state is DuplicateMessage) {
+                if (state is ChatRoomLoaded || state is ChatRoomLoadingMore) {
                   final messages = state is ChatRoomLoaded
                       ? state.messages
                       : (state as ChatRoomLoadingMore).currentMessages;
@@ -240,6 +248,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                       ? state.isOffline
                       : false;
 
+                  final typingUsers = state is ChatRoomLoaded
+                      ? state.typingUsers
+                      : <int, String>{};
                   if (messages.isEmpty) {
                     return const Center(
                       child: Text(
@@ -328,8 +339,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                     onDelete: () => _deleteMessage(message.id),
                                     currentUserId: widget.currentUserId,
                                     isPending: message.isPending == 1,
-                                    parentMessage: messages
-                                        .firstWhereOrNull((m) => m.id == message.parentMessageId),
+                                    parentMessage: messages.firstWhereOrNull(
+                                      (m) => m.id == message.parentMessageId,
+                                    ),
                                   ),
                                 ],
                               );
@@ -337,6 +349,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                           ),
                         ),
                       ),
+
+                      // Typing Indicator
+                      TypingIndicatorWidget(typingUsers: typingUsers),
                     ],
                   );
                 }

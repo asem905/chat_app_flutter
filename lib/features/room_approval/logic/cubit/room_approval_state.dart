@@ -6,16 +6,16 @@ sealed class RoomApprovalState extends Equatable {
   @override
   List<Object> get props => [];
 }
+
 final class RoomApprovalInitial extends RoomApprovalState {}
 
 class RoomApprovalLoading extends RoomApprovalState {}
 
 class RoomApprovalLoaded extends RoomApprovalState {
   final List pendingUsers;
+  final bool isOnline;
 
-  const RoomApprovalLoaded({
-    required this.pendingUsers,
-  });
+  const RoomApprovalLoaded({required this.pendingUsers, this.isOnline = false});
   @override
   List<Object> get props => [pendingUsers];
 }

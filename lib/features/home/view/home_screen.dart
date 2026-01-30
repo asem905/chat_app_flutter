@@ -26,7 +26,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int currnt_index = 0;
 
-
   @override
   void initState() {
     super.initState();
@@ -38,6 +37,9 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       builder: (dialogContext) => CreateRoomDialog(
         onCreateRoom: (name, isPrivate, description) {
+          if (name.isEmpty || description.isEmpty) {
+            return;
+          }
           context.read<HomeCubit>().createRoom(
             name,
             description,
@@ -47,43 +49,81 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-  
+
   void _showMenu() {
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+      backgroundColor: Colors.transparent,
       builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
         padding: EdgeInsets.symmetric(vertical: 20.h),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Handle bar
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.border,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
             ListTile(
-              leading: const Icon(Icons.person, color: AppColors.primary),
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryVeryLight,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.person, color: AppColors.primary),
+              ),
               title: const Text('Profile'),
               onTap: () {
                 context.pop();
-                // Navigate to profile
+                context.pushNamed(Routes.profileScreen);
               },
             ),
             ListTile(
-              leading: const Icon(Icons.settings, color: AppColors.primary),
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryVeryLight,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.settings, color: AppColors.primary),
+              ),
               title: const Text('Settings'),
               onTap: () {
                 context.pop();
-                // Navigate to settings
+                context.pushNamed(Routes.settingsScreen);
               },
             ),
+            const Divider(height: 32),
             ListTile(
-              leading: const Icon(Icons.logout, color: AppColors.error),
-              title: const Text('Logout'),
-              onTap: () {
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.error.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.logout, color: AppColors.error),
+              ),
+              title: const Text(
+                'Logout',
+                style: TextStyle(color: AppColors.error),
+              ),
+              onTap: () async {
                 context.pop();
-                context.read<HomeCubit>().logout();
-                // Navigate to login
+                await TokenManager().clearToken();
+                context.pushNamed(Routes.loginScreen);
               },
             ),
+            const SizedBox(height: 10),
           ],
         ),
       ),
@@ -118,23 +158,18 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.more_vert, color: AppColors.textPrimary),
-            onPressed: _showMenu,
-          ),
-          //show all rooms button
-          IconButton(
-            icon: const Icon(Icons.list, color: AppColors.textPrimary),
+            icon: const Icon(
+              Icons.explore_outlined,
+              color: AppColors.textPrimary,
+            ),
+            tooltip: 'Discover Rooms',
             onPressed: () {
               context.pushNamed(Routes.discoverRoomsScreen);
             },
           ),
-          //logout button
           IconButton(
-            icon: const Icon(Icons.logout, color: AppColors.textPrimary),
-            onPressed: () async{
-              await TokenManager().clearToken();
-              context.pushNamed(Routes.loginScreen);
-            },
+            icon: const Icon(Icons.more_vert, color: AppColors.textPrimary),
+            onPressed: _showMenu,
           ),
         ],
       ),
@@ -244,7 +279,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                       await SharedPrefHelper.getInt(
                                         'current_user_id',
                                       );
-                                  if (room.room_created_by == currentUserId && !state.isOffline ) {
+                                  final currentUserName =
+                                      await SharedPrefHelper.getString(
+                                        'user_name',
+                                      );
+                                  if (room.room_created_by == currentUserId &&
+                                      !state.isOffline) {
                                     context.pushNamed(
                                       Routes.roomApprovalScreen,
                                       arguments: [room.id, room.room_name],
@@ -256,6 +296,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         room.id,
                                         room.room_name,
                                         currentUserId,
+                                        currentUserName,
                                       ],
                                     );
                                   }
@@ -278,7 +319,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 onPressed: () {
                   context.read<HomeCubit>().loadRooms();
                 },
-                child: const Text('Retry'),
+                child: const Text(
+                  'if you are offline press here to show cached chats',
+                ),
               ),
             );
           }

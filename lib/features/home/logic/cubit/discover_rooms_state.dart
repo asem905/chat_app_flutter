@@ -1,7 +1,6 @@
 import 'package:chat_app/features/home/data/models/available_rooms_model.dart';
 import 'package:equatable/equatable.dart';
 
-
 abstract class DiscoverRoomsState extends Equatable {
   @override
   List<Object> get props => [];
@@ -15,14 +14,16 @@ class DiscoverRoomsLoaded extends DiscoverRoomsState {
   final List<RoomWithMembersModel> rooms;
   final List<RoomWithMembersModel> filteredRooms;
   final String searchQuery;
+  final bool isOnline;
 
   DiscoverRoomsLoaded({
     required this.rooms,
     required this.filteredRooms,
     this.searchQuery = '',
+    this.isOnline = false,
   });
   @override
-  List<Object> get props => [rooms, filteredRooms, searchQuery];
+  List<Object> get props => [rooms, filteredRooms, searchQuery, isOnline];
 }
 
 class DiscoverRoomsError extends DiscoverRoomsState {

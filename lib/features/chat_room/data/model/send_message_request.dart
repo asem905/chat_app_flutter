@@ -7,18 +7,17 @@ class SendMessageRequest {
   final String content;
   final int? parentMessageId;
   final String idempotencyToken;
-  
+
   SendMessageRequest({
     required this.roomId,
     required this.content,
     this.parentMessageId,
   }) : idempotencyToken = _generateToken(content, roomId);
-  
+
   static String _generateToken(String content, int roomId) {
     // Generate deterministic token from content + room + timestamp
-    final timestamp = DateTime.now().minute;
+    final timestamp = DateTime.now().second;
     final data = '$content-$roomId-$timestamp';
-    print('data: $data');
     return sha256.convert(utf8.encode(data)).toString();
   }
 

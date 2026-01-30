@@ -7,35 +7,33 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 class HomeCubit extends Cubit<HomeState> {
   final HomeRepositoryWithCache _repository;
   final ConnectivityService _connectivityService;
-  
+
   StreamSubscription<bool>? _connectivitySubscription;
 
-  HomeCubit(
-    this._repository,
-    this._connectivityService,
-  ) : super(HomeInitial()) {
+  HomeCubit(this._repository, this._connectivityService)
+    : super(HomeInitial()) {
     _initConnectivityListener();
   }
 
   void _initConnectivityListener() {
-    _connectivitySubscription = _connectivityService.onConnectivityChanged.listen((isOnline) {
-      if (isOnline) {
-        print('🌐 Back online! Refreshing rooms...');
-        _refreshInBackground();
-      } else {
-        print('📵 Gone offline. Using cached data.');
-      }
-    });
+    _connectivitySubscription = _connectivityService.onConnectivityChanged
+        .listen((isOnline) {
+          if (isOnline) {
+            print('🌐 Back online! Refreshing rooms...');
+            _refreshInBackground();
+          } else {
+            print('📵 Gone offline. Using cached data.');
+          }
+        });
   }
 
   Future<void> _refreshInBackground() async {
     try {
       final rooms = await _repository.getRooms();
       if (state is HomeLoaded) {
-        emit(HomeLoaded(
-          rooms: rooms,
-          isOffline: !_connectivityService.isOnline,
-        ));
+        emit(
+          HomeLoaded(rooms: rooms, isOffline: !_connectivityService.isOnline),
+        );
       }
     } catch (e) {
       print('Background refresh failed: $e');
@@ -44,16 +42,13 @@ class HomeCubit extends Cubit<HomeState> {
 
   Future<void> loadRooms() async {
     emit(HomeLoading());
-    
+
     try {
       // This will return cached data if offline, or fresh data if online
       final rooms = await _repository.getRooms();
-      emit(HomeLoaded(
-        rooms: rooms,
-        isOffline: !_connectivityService.isOnline,
-      ));
+      emit(HomeLoaded(rooms: rooms, isOffline: !_connectivityService.isOnline));
     } catch (e) {
-      emit(HomeError(e.toString()));
+      emit(HomeError(e.toString(), !_connectivityService.isOnline));
     }
   }
 
@@ -63,25 +58,34 @@ class HomeCubit extends Cubit<HomeState> {
     bool isPrivate = false,
   }) async {
     if (!_connectivityService.isOnline) {
-      emit(HomeError('Cannot create room while offline. Please check your connection.'));
+      emit(
+        HomeError(
+          'Cannot create room while offline. Please check your connection.',
+          !_connectivityService.isOnline,
+        ),
+      );
       return;
     }
 
     final currentState = state;
     emit(RoomCreating());
-    
+
     try {
-      final room = await _repository.createRoom(name, description, isPrivate: isPrivate);
+      final room = await _repository.createRoom(
+        name,
+        description,
+        isPrivate: isPrivate,
+      );
       emit(RoomCreated(room));
-      
+
       // Reload rooms after creation
       await loadRooms();
     } catch (e) {
       if (currentState is HomeLoaded) {
         emit(currentState);
       }
-      emit(HomeError(e.toString()));
-      
+      emit(HomeError(e.toString(), !_connectivityService.isOnline));
+
       // Restore previous state after showing error
       if (currentState is HomeLoaded) {
         emit(currentState);
@@ -95,7 +99,7 @@ class HomeCubit extends Cubit<HomeState> {
       await loadRooms();
       return;
     }
-    
+
     await loadRooms();
   }
 

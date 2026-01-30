@@ -2,9 +2,9 @@
 
 import 'package:chat_app/core/helpers/extensions.dart';
 import 'package:chat_app/core/routing/routes.dart';
-import 'package:chat_app/features/login/logic/cubit/login_cubit.dart';
-import 'package:chat_app/features/login/logic/cubit/login_state.dart';
 import 'package:chat_app/features/login/view/widgets/password_text_field.dart';
+import 'package:chat_app/features/signup/logic/cubit/signup_cubit.dart';
+import 'package:chat_app/features/signup/logic/cubit/signup_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theming/app_colors.dart';
@@ -12,18 +12,20 @@ import '../../../../core/theming/text_styles.dart';
 import '../../../../core/widgets/app_custom_button.dart';
 import '../../../../core/widgets/app_text_form_field.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({Key? key}) : super(key: key);
+class SignUpScreen extends StatefulWidget {
+  const SignUpScreen({Key? key}) : super(key: key);
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<SignUpScreen> createState() => _SignUpScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen>
+class _SignUpScreenState extends State<SignUpScreen>
     with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _usernameController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
 
   bool _rememberMe = false;
   late AnimationController _animationController;
@@ -85,11 +87,31 @@ class _LoginScreenState extends State<LoginScreen>
     return null;
   }
 
-  void _handleLogin() {
+  String? _validateConfirmPassword(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Confirm Password is required';
+    }
+    if (value != _passwordController.text) {
+      return 'Passwords do not match';
+    }
+    return null;
+  }
+
+  String? _validateUsername(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Username is required';
+    }
+    return null;
+  }
+
+  void _handleSignUp() {
     if (_formKey.currentState!.validate()) {
-      context.read<LoginCubit>().login(
+      context.read<SignUpCubit>().signUp(
         _emailController.text.trim(),
         _passwordController.text,
+        _usernameController.text,
+        _confirmPasswordController.text,
+        "user",
       );
     }
   }
@@ -100,16 +122,16 @@ class _LoginScreenState extends State<LoginScreen>
       body: Container(
         decoration: const BoxDecoration(gradient: AppColors.backgroundGradient),
         child: SafeArea(
-          child: BlocConsumer<LoginCubit, LoginState>(
+          child: BlocConsumer<SignUpCubit, SignUpState>(
             listener: (context, state) {
-              if (state is LoginSuccess) {
+              if (state is SignUpSuccess) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Row(
                       children: [
                         const Icon(Icons.check_circle, color: Colors.white),
                         const SizedBox(width: 12),
-                        const Text('Login successful!'),
+                        const Text('SignUp successful!'),
                       ],
                     ),
                     backgroundColor: AppColors.secondary,
@@ -122,7 +144,7 @@ class _LoginScreenState extends State<LoginScreen>
                 );
                 // Navigate to home screen
                 context.pushNamed(Routes.homeScreen);
-              } else if (state is LoginError) {
+              } else if (state is SignUpError) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Row(
@@ -143,7 +165,7 @@ class _LoginScreenState extends State<LoginScreen>
               }
             },
             builder: (context, state) {
-              final isLoading = state is LoginLoading;
+              final isLoading = state is SignUpLoading;
 
               return SingleChildScrollView(
                 padding: const EdgeInsets.all(24),
@@ -211,7 +233,20 @@ class _LoginScreenState extends State<LoginScreen>
                           ),
 
                           const SizedBox(height: 40),
+                          // Username Field
+                          CustomTextFormField(
+                            controller: _usernameController,
+                            hintText: 'Enter your username',
+                            labelText: 'Username',
+                            keyboardType: TextInputType.text,
+                            prefixIcon: const Icon(
+                              Icons.person_outline,
+                              color: AppColors.textSecondary,
+                            ),
+                            validator: _validateUsername,
+                          ),
 
+                          const SizedBox(height: 16),
                           // Email Field
                           CustomTextFormField(
                             controller: _emailController,
@@ -226,7 +261,7 @@ class _LoginScreenState extends State<LoginScreen>
                             enabled: !isLoading,
                           ),
 
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 16),
 
                           // Password Field
                           PasswordTextField(
@@ -234,7 +269,13 @@ class _LoginScreenState extends State<LoginScreen>
                             enabled: !isLoading,
                             validator: _validatePassword,
                           ),
-
+                          const SizedBox(height: 16),
+                          PasswordTextField(
+                            labelText: 'Confirm Password',
+                            controller: _confirmPasswordController,
+                            enabled: !isLoading,
+                            validator: _validateConfirmPassword,
+                          ),
                           const SizedBox(height: 16),
 
                           // Remember Me & Forgot Password
@@ -294,10 +335,10 @@ class _LoginScreenState extends State<LoginScreen>
 
                           const SizedBox(height: 32),
 
-                          // Login Button with enhanced styling
+                          // SignUp Button with enhanced styling
                           CustomButton(
-                            text: 'Login',
-                            onPressed: isLoading ? null : _handleLogin,
+                            text: 'SignUp',
+                            onPressed: isLoading ? null : _handleSignUp,
                             isLoading: isLoading,
                             suffixIcon: !isLoading
                                 ? const Icon(Icons.arrow_forward, size: 20)
@@ -337,7 +378,7 @@ class _LoginScreenState extends State<LoginScreen>
 
                           const SizedBox(height: 32),
 
-                          // Social Login Buttons
+                          // Social SignUp Buttons
                           CustomButton(
                             text: 'Continue with Google',
                             type: ButtonType.outlined,
@@ -345,7 +386,7 @@ class _LoginScreenState extends State<LoginScreen>
                             onPressed: isLoading
                                 ? null
                                 : () {
-                                    // Handle Google login
+                                    // Handle Google SignUp
                                   },
                             prefixIcon: Container(
                               padding: const EdgeInsets.all(2),
@@ -372,7 +413,7 @@ class _LoginScreenState extends State<LoginScreen>
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
-                                  "Don't have an account? ",
+                                  "Already have an account? ",
                                   style: AppTextStyles.bodyMedium,
                                 ),
                                 TextButton(
@@ -380,9 +421,7 @@ class _LoginScreenState extends State<LoginScreen>
                                       ? null
                                       : () {
                                           // Navigate to sign up
-                                          context.pushNamed(
-                                            Routes.signUpScreen,
-                                          );
+                                          context.pushNamed(Routes.loginScreen);
                                         },
                                   style: TextButton.styleFrom(
                                     padding: EdgeInsets.zero,
@@ -391,7 +430,7 @@ class _LoginScreenState extends State<LoginScreen>
                                         MaterialTapTargetSize.shrinkWrap,
                                   ),
                                   child: Text(
-                                    'Sign Up',
+                                    'Login',
                                     style: AppTextStyles.bodyMedium.copyWith(
                                       color: AppColors.primary,
                                       fontWeight: FontWeight.bold,

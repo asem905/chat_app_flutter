@@ -1,5 +1,7 @@
 import 'package:chat_app/core/di/dependency_incjection.dart.dart';
 import 'package:chat_app/core/routing/routes.dart';
+import 'package:chat_app/core/services/internet_connectivity_service.dart';
+import '../../features/signup/logic/cubit/signup_cubit.dart';
 import 'package:chat_app/features/additional_screens/profile_screen.dart';
 import 'package:chat_app/features/additional_screens/settings_screen.dart';
 import 'package:chat_app/features/chat_room/logic/cubit/chat_cubit.dart';
@@ -10,11 +12,12 @@ import 'package:chat_app/features/home/view/discover_rooms_screen.dart';
 import 'package:chat_app/features/home/view/home_screen.dart';
 import 'package:chat_app/features/login/logic/cubit/login_cubit.dart';
 import 'package:chat_app/features/login/view/login_screen.dart';
+import 'package:chat_app/features/room_approval/data/repos/room_approval_repo.dart';
 import 'package:chat_app/features/room_approval/logic/cubit/room_approval_cubit.dart';
 import 'package:chat_app/features/room_approval/view/room_approval_screen.dart';
+import 'package:chat_app/features/signup/view/signup_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
 
 class AppRouter {
   Route? generateRoute(RouteSettings settings) {
@@ -25,32 +28,58 @@ class AppRouter {
         return MaterialPageRoute(
           builder: (_) => BlocProvider(
             create: (_) => getIt<LoginCubit>(),
-            child: const LoginScreen()
-            ));
+            child: const LoginScreen(),
+          ),
+        );
+      case Routes.signUpScreen:
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider(
+            create: (_) => getIt<SignUpCubit>(),
+            child: const SignUpScreen(),
+          ),
+        );
       case Routes.homeScreen:
-        return MaterialPageRoute(builder: (_) => BlocProvider(
-          create: (context) => getIt<HomeCubit>(),
-          child: const HomeScreen(),
-        ));
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider(
+            create: (context) => getIt<HomeCubit>(),
+            child: const HomeScreen(),
+          ),
+        );
       case Routes.discoverRoomsScreen:
-        return MaterialPageRoute(builder: (_) => BlocProvider(
-          create: (context) => getIt<DiscoverRoomsCubit>(),
-          child: const DiscoverRoomsScreen(),
-        ));
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider(
+            create: (context) => getIt<DiscoverRoomsCubit>(),
+            child: const DiscoverRoomsScreen(),
+          ),
+        );
       case Routes.settingsScreen:
         return MaterialPageRoute(builder: (_) => SettingsScreen());
       case Routes.profileScreen:
         return MaterialPageRoute(builder: (_) => ProfileScreen());
       case Routes.roomApprovalScreen:
-        return MaterialPageRoute(builder: (_) => BlocProvider(
-          create: (context) => getIt<RoomApprovalCubit>(),
-          child: RoomApprovalScreen(roomId: (arguments! as List)[0],roomName: (arguments as List)[1],),
-        ));
+        final args = arguments as List;
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider(
+            create: (context) => RoomApprovalCubit(
+              getIt<RoomApprovalRepository>(),
+              getIt<ConnectivityService>(),
+              args[0], // roomId
+            ),
+            child: RoomApprovalScreen(roomId: args[0], roomName: args[1]),
+          ),
+        );
       case Routes.chatRoomScreen:
-        return MaterialPageRoute(builder: (_)=>BlocProvider(
-          create: (context) => getIt<ChatRoomCubit>(),
-          child: ChatRoomScreen(roomId: (arguments! as List)[0], roomName: (arguments as List)[1], currentUserId: arguments[2]),
-        ));
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider(
+            create: (context) => getIt<ChatRoomCubit>(),
+            child: ChatRoomScreen(
+              roomId: (arguments! as List)[0],
+              roomName: (arguments as List)[1],
+              currentUserId: arguments[2],
+              userName: arguments[3],
+            ),
+          ),
+        );
       default:
         return null;
     }

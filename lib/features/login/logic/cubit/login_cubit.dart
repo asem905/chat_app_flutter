@@ -12,26 +12,23 @@ class LoginCubit extends Cubit<LoginState> {
 
   Future<void> login(String email, String password) async {
     emit(LoginLoading());
-    
+
     try {
       final request = LoginRequest(email: email, password: password);
+      print("Login request: ${request.toJson()}");
       final response = await _repository.login(request);
-      
+
       final token = response.data['user']['token'];
       final userId = response.data['user']['id'] as int;
-      
-      print("token: $token");
-      print("user id: $userId");
-      
+      final userName = response.data['user']['username'];
+
       // Save user data
       await SharedPrefHelper.setData('current_user_id', userId);
-      
+      await SharedPrefHelper.setData('user_name', userName);
+
       // Save token with expiration handling
-      await TokenManager().saveToken(
-        token,
-        validity: const Duration(hours: 1),
-      );
-      
+      await TokenManager().saveToken(token, validity: const Duration(hours: 1));
+
       emit(LoginSuccess(response));
     } catch (e) {
       print("Login error: ${e.toString()}");

@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:chat_app/core/networking/api_constants.dart';
 import 'package:chat_app/features/login/data/model/login_request.dart';
 import 'package:chat_app/features/login/data/model/login_response.dart';
 import 'package:http/http.dart' as http;
@@ -14,7 +13,7 @@ class LoginService {
     var req = jsonEncode(request.toJson());
     print("Login request===========: $req");
     final response = await http.post(
-      Uri.parse(ApiConstants.login),
+      Uri.parse("http://192.168.1.13:3001/api/v1/users/login"),
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',

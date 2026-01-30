@@ -25,13 +25,17 @@ class HomeLoaded extends HomeState {
 
 class HomeError extends HomeState {
   final String message;
-  HomeError(this.message);
+  final bool isOffline;
+  HomeError(this.message, this.isOffline);
 
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [message, isOffline];
 }
+
 class RoomLoading extends HomeState {}
+
 class RoomCreating extends HomeState {}
+
 class GetRooms extends HomeState {
   final List<RoomModel> rooms;
   GetRooms(this.rooms);
@@ -39,6 +43,7 @@ class GetRooms extends HomeState {
   @override
   List<Object?> get props => [rooms];
 }
+
 class RoomCreated extends HomeState {
   final RoomModel room;
   RoomCreated(this.room);

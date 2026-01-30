@@ -36,7 +36,7 @@ class _RoomApprovalScreenState extends State<RoomApprovalScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<RoomApprovalCubit>().loadPendingUsers(widget.roomId);
+    context.read<RoomApprovalCubit>().loadPendingUsers();
   }
 
   void _showApproveDialog(int userId, String username) {
@@ -46,7 +46,7 @@ class _RoomApprovalScreenState extends State<RoomApprovalScreen> {
         username: username,
         isApprove: true,
         onConfirm: () {
-          context.read<RoomApprovalCubit>().approveUser(userId, username, widget.roomId);
+          context.read<RoomApprovalCubit>().approveUser(userId, username);
         },
       ),
     );
@@ -59,7 +59,7 @@ class _RoomApprovalScreenState extends State<RoomApprovalScreen> {
         username: username,
         isApprove: false,
         onConfirm: () {
-          context.read<RoomApprovalCubit>().rejectUser(userId, username, widget.roomId);
+          context.read<RoomApprovalCubit>().rejectUser(userId, username);
         },
       ),
     );
@@ -76,13 +76,29 @@ class _RoomApprovalScreenState extends State<RoomApprovalScreen> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      floatingActionButton: FloatingActionButton(onPressed: ()async{
-        final currentUserId=await SharedPrefHelper.getInt('current_user_id');
-        context.pushNamed(Routes.chatRoomScreen,arguments: [widget.roomId,widget.roomName,currentUserId]);
-      },
-      backgroundColor: AppColors.surface,
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          final currentUserId = await SharedPrefHelper.getInt(
+            'current_user_id',
+          );
+          final currentUserName = await SharedPrefHelper.getString('user_name');
+          context.pushNamed(
+            Routes.chatRoomScreen,
+            arguments: [
+              widget.roomId,
+              widget.roomName,
+              currentUserId,
+              currentUserName,
+            ],
+          );
+        },
+        backgroundColor: AppColors.surface,
 
-      child: Icon(Icons.chat_outlined, color: AppColors.secondary,size: 38.sp,),
+        child: Icon(
+          Icons.chat_outlined,
+          color: AppColors.secondary,
+          size: 38.sp,
+        ),
       ),
       body: BlocConsumer<RoomApprovalCubit, RoomApprovalState>(
         listener: (context, state) {
@@ -115,9 +131,7 @@ class _RoomApprovalScreenState extends State<RoomApprovalScreen> {
                   children: [
                     const Icon(Icons.info_outline, color: Colors.white),
                     const SizedBox(width: 12),
-                    Expanded(
-                      child: Text('${state.username} rejected'),
-                    ),
+                    Expanded(child: Text('${state.username} rejected')),
                   ],
                 ),
                 backgroundColor: AppColors.error,
@@ -167,6 +181,35 @@ class _RoomApprovalScreenState extends State<RoomApprovalScreen> {
           }
 
           if (state is RoomApprovalLoaded) {
+            if (!state.isOnline) {
+              //return beautiful offline ui
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.cloud_off,
+                      size: 80,
+                      color: AppColors.textSecondary,
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      'You are offline',
+                      style: AppTextStyles.headingMedium.copyWith(
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Please check your internet connection',
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
             return Column(
               children: [
                 // Header Info
@@ -231,7 +274,9 @@ class _RoomApprovalScreenState extends State<RoomApprovalScreen> {
                 Expanded(
                   child: RefreshIndicator(
                     onRefresh: () async {
-                      await context.read<RoomApprovalCubit>().refreshPendingUsers(widget.roomId);
+                      await context
+                          .read<RoomApprovalCubit>()
+                          .refreshPendingUsers();
                     },
                     child: ListView.builder(
                       padding: const EdgeInsets.all(16),
@@ -264,7 +309,7 @@ class _RoomApprovalScreenState extends State<RoomApprovalScreen> {
               message: state.message,
               action: ElevatedButton.icon(
                 onPressed: () {
-                  context.read<RoomApprovalCubit>().loadPendingUsers(widget.roomId);
+                  context.read<RoomApprovalCubit>().loadPendingUsers();
                 },
                 icon: const Icon(Icons.refresh),
                 label: const Text('Retry'),

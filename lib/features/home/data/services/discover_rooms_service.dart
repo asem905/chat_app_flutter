@@ -12,6 +12,7 @@ class DiscoverRoomsService {
     // Replace with actual API call
     final result = await getTokenAndCurrentUserId();
     final token = result['token'];
+    print("token succ ftch:$token");
     final response = await http.get(
       Uri.parse(ApiConstants.getAllRooms),
       headers: {

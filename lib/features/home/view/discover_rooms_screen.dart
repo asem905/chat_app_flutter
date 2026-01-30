@@ -15,7 +15,6 @@ import '../../../../core/widgets/custom_app_bar.dart';
 import '../../../../core/widgets/empty_state_widget.dart';
 import '../../../../core/widgets/loading_widget.dart';
 
-
 class DiscoverRoomsScreen extends StatefulWidget {
   const DiscoverRoomsScreen({super.key});
 
@@ -27,7 +26,7 @@ class _DiscoverRoomsScreenState extends State<DiscoverRoomsScreen> {
   final TextEditingController _searchController = TextEditingController();
   int? _joiningRoomId;
   int currnt_index = 3;
-  
+
   @override
   void initState() {
     super.initState();
@@ -52,10 +51,9 @@ class _DiscoverRoomsScreenState extends State<DiscoverRoomsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      
       backgroundColor: AppColors.background,
       bottomNavigationBar: BottomNavigationBar(
-        items:NavBottomHelper.bottomNavItems(),
+        items: NavBottomHelper.bottomNavItems(),
         currentIndex: currnt_index,
         onTap: (index) {
           setState(() {
@@ -86,7 +84,9 @@ class _DiscoverRoomsScreenState extends State<DiscoverRoomsScreen> {
                     const Icon(Icons.check_circle, color: Colors.white),
                     SizedBox(width: 12.w),
                     Expanded(
-                      child: Text('Successfully sent request to join "${state.roomName}"!'),
+                      child: Text(
+                        'Successfully sent request to join "${state.roomName}"!',
+                      ),
                     ),
                   ],
                 ),
@@ -127,6 +127,36 @@ class _DiscoverRoomsScreenState extends State<DiscoverRoomsScreen> {
           }
 
           if (state is DiscoverRoomsLoaded) {
+            if (!state.isOnline) {
+              print("===============offline");
+              //return beautiful offline ui
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.cloud_off,
+                      size: 80,
+                      color: AppColors.textSecondary,
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      'You are offline',
+                      style: AppTextStyles.headingMedium.copyWith(
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Please check your internet connection',
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
             return Column(
               children: [
                 // Search Bar
@@ -198,7 +228,9 @@ class _DiscoverRoomsScreenState extends State<DiscoverRoomsScreen> {
                         )
                       : RefreshIndicator(
                           onRefresh: () async {
-                            await context.read<DiscoverRoomsCubit>().refreshRooms();
+                            await context
+                                .read<DiscoverRoomsCubit>()
+                                .refreshRooms();
                           },
                           child: ListView.builder(
                             padding: const EdgeInsets.all(16),
@@ -210,9 +242,9 @@ class _DiscoverRoomsScreenState extends State<DiscoverRoomsScreen> {
                                 isJoining: _joiningRoomId == room.room_id,
                                 onJoin: () {
                                   context.read<DiscoverRoomsCubit>().joinRoom(
-                                        room.room_id,
-                                        room.room_name,
-                                      );
+                                    room.room_id,
+                                    room.room_name,
+                                  );
                                 },
                                 onTap: () {
                                   // Show room details dialog or navigate to room
@@ -259,19 +291,13 @@ class _DiscoverRoomsScreenState extends State<DiscoverRoomsScreen> {
     showDialog(
       context: context,
       builder: (dialogContext) => Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              AvatarWidget(
-                imageUrl: room.imageUrl,
-                name: room.name,
-                size: 80,
-              ),
+              AvatarWidget(imageUrl: room.imageUrl, name: room.name, size: 80),
               SizedBox(height: 16.h),
               Text(
                 room.name,
@@ -296,10 +322,7 @@ class _DiscoverRoomsScreenState extends State<DiscoverRoomsScreen> {
                   ),
                   SizedBox(width: 12.w),
                   if (room.isPrivate)
-                    _buildInfoChip(
-                      Icons.lock_outline,
-                      'Private',
-                    ),
+                    _buildInfoChip(Icons.lock_outline, 'Private'),
                 ],
               ),
               SizedBox(height: 24.h),
@@ -325,9 +348,9 @@ class _DiscoverRoomsScreenState extends State<DiscoverRoomsScreen> {
                         onPressed: () {
                           Navigator.pop(dialogContext);
                           context.read<DiscoverRoomsCubit>().joinRoom(
-                                room.id,
-                                room.name,
-                              );
+                            room.id,
+                            room.name,
+                          );
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
