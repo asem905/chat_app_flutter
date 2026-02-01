@@ -542,4 +542,4 @@ MIT License
 
 ---
 
-**Built with ❤️ using Flutter and Clean Architecture**
+**Built using Flutter and Clean Architecture**
