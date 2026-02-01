@@ -11,34 +11,29 @@ class PendingUserCard extends StatelessWidget {
   final bool isProcessing;
 
   const PendingUserCard({
-    Key? key,
+    super.key,
     required this.user,
     required this.onApprove,
     required this.onReject,
     this.isProcessing = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     return Card(
       elevation: 2,
       shadowColor: AppColors.primary.withOpacity(0.1),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Row(
           children: [
             // Avatar
-            AvatarWidget(
-              name: user.username!,
-              size: 56,
-            ),
-            
+            AvatarWidget(name: user.username!, size: 56),
+
             const SizedBox(width: 12),
-            
+
             // User Info
             Expanded(
               child: Column(
@@ -97,9 +92,9 @@ class PendingUserCard extends StatelessWidget {
                 ],
               ),
             ),
-            
+
             const SizedBox(width: 12),
-            
+
             // Action Buttons
             Column(
               children: [
@@ -118,7 +113,9 @@ class PendingUserCard extends StatelessWidget {
                               height: 20,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
                               ),
                             )
                           : const Icon(
@@ -129,9 +126,9 @@ class PendingUserCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 8),
-                
+
                 // Reject Button
                 Material(
                   color: AppColors.error,

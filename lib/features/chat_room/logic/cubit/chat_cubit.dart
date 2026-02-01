@@ -13,9 +13,9 @@ class ChatRoomCubit extends Cubit<ChatRoomState> {
   final ConnectivityService _connectivityService;
 
   int _currentPage = 1;
-  static const int _pageSize = 50;
+  static const int _pageSize = 200;
   int? _currentRoomId;
-  int? _currentUserId; // ✅ NEW: Store current user ID
+  int? _currentUserId;
 
   StreamSubscription<MessageModel>? _messageSubscription;
   StreamSubscription<bool>? _connectionSubscription;
@@ -48,14 +48,13 @@ class ChatRoomCubit extends Cubit<ChatRoomState> {
     _connectionSubscription = _connectivityService.onConnectivityChanged.listen(
       (isOnline) {
         if (isOnline) {
-          print('🌐 Back online! Syncing pending messages...');
+          print('Back online! Syncing pending messages...');
           _syncPendingMessages();
-          // Rejoin room if needed
           if (_currentRoomId != null) {
             _webSocketService.joinRoom(_currentRoomId!);
           }
         } else {
-          print('📵 Gone offline. Messages will be queued.');
+          print('Gone offline. Messages will be queued.');
         }
       },
     );
@@ -65,7 +64,6 @@ class ChatRoomCubit extends Cubit<ChatRoomState> {
     try {
       await _repository.syncPendingMessages();
 
-      // Refresh messages after sync
       if (_currentRoomId != null) {
         await loadMessages(_currentRoomId!, refresh: true);
       }
@@ -78,27 +76,40 @@ class ChatRoomCubit extends Cubit<ChatRoomState> {
     final currentState = state;
     if (currentState is ChatRoomLoaded) {
       if (message.roomId == _currentRoomId) {
-        // Check for duplicates
-        final messageExists = currentState.messages.any(
-          (m) => m.id == message.id,
-        );
-        if (!messageExists) {
-          // Remove pending message if this is the synced version
-          final updatedMessages = currentState.messages
-              .where((m) => m.localId != message.localId || m.id == message.id)
-              .toList();
-
-          emit(
-            ChatRoomLoaded(
-              messages: [message, ...updatedMessages],
-              hasMore: currentState.hasMore,
-              currentPage: currentState.currentPage,
-              isOffline: !_connectivityService.isOnline,
-              typingUsers: currentState.typingUsers,
-            ),
-          );
+        bool messageExists = false;
+        if (message.id > 0) {
+          messageExists = currentState.messages.any((m) => m.id == message.id);
         }
+
+        if (!messageExists) {
+          final updatedMessages = currentState.messages.toList();
+          _repository
+              .cacheMessage(message)
+              .then((_) {
+                print("Message cached successfully");
+              })
+              .catchError((e) {
+                print("Failed to cache message: $e");
+              });
+
+          final newState = ChatRoomLoaded(
+            messages: [...updatedMessages, message],
+            hasMore: currentState.hasMore,
+            currentPage: currentState.currentPage,
+            isOffline: !_connectivityService.isOnline,
+            typingUsers: currentState.typingUsers,
+          );
+          emit(newState);
+        } else {
+          print("Message already exists, skipping");
+        }
+      } else {
+        print(
+          "Message for different room (${message.roomId} vs $_currentRoomId), skipping",
+        );
       }
+    } else {
+      print("Current state is not ChatRoomLoaded, it's ${state.runtimeType}");
     }
   }
 
@@ -116,9 +127,7 @@ class ChatRoomCubit extends Cubit<ChatRoomState> {
 
     if (userId == null) return;
 
-    // ✅ Don't show typing indicator for current user
     if (userId == _currentUserId) {
-      print('⏭️ Ignoring typing event for current user');
       return;
     }
 
@@ -126,13 +135,9 @@ class ChatRoomCubit extends Cubit<ChatRoomState> {
 
     if (isTyping && username != null) {
       updatedTypingUsers[userId] = username;
-      print('✅ Added typing user: $username (userId: $userId)');
     } else {
       updatedTypingUsers.remove(userId);
-      print('❌ Removed typing user: $username (userId: $userId)');
     }
-
-    print('👥 Current typing users: ${updatedTypingUsers.values.join(", ")}');
 
     emit(
       ChatRoomLoaded(
@@ -157,7 +162,7 @@ class ChatRoomCubit extends Cubit<ChatRoomState> {
 
     _currentRoomId = roomId;
     if (currentUserId != null) {
-      _currentUserId = currentUserId; // ✅ Store current user ID
+      _currentUserId = currentUserId;
     }
 
     if (_connectivityService.isOnline) {
@@ -165,13 +170,7 @@ class ChatRoomCubit extends Cubit<ChatRoomState> {
     }
 
     try {
-      // This will return cached data if offline, or fresh data if online
-      final messages = await _repository.getMessages(
-        roomId,
-        limit: _pageSize,
-        offset: 0,
-      );
-      print('✅ Successfully Fetched messages: ${messages.length}');
+      final messages = await _repository.getMessages(roomId);
       emit(
         ChatRoomLoaded(
           messages: messages,
@@ -218,7 +217,6 @@ class ChatRoomCubit extends Cubit<ChatRoomState> {
     try {
       final currentState = state;
       var message = await _repository.editMessage(roomId, messageId, content);
-      print('==================Successfully edited message: $message');
       if (currentState is ChatRoomLoaded) {
         emit(
           ChatRoomLoaded(
@@ -232,7 +230,6 @@ class ChatRoomCubit extends Cubit<ChatRoomState> {
         );
       }
 
-      // Show toast if offline
       if (!_connectivityService.isOnline) {
         emit(MessageQueued('Message will be automatically edited when online'));
         if (currentState is ChatRoomLoaded) {
@@ -260,25 +257,24 @@ class ChatRoomCubit extends Cubit<ChatRoomState> {
         parentMessageId: parentMessageId,
       );
 
-      // This will either send or queue the message
       final message = await _repository.sendMessage(roomId, request);
+
       if (message.id == 0) {
-        print('✅ Message already sent from cubit, skipping');
         return;
       }
-      // Add message to UI immediately (even if pending)
+
       if (currentState is ChatRoomLoaded) {
-        emit(
-          ChatRoomLoaded(
-            messages: [...currentState.messages, message],
-            hasMore: currentState.hasMore,
-            currentPage: currentState.currentPage,
-            isOffline: !_connectivityService.isOnline,
-          ),
+        final newState = ChatRoomLoaded(
+          messages: [...currentState.messages, message],
+          hasMore: currentState.hasMore,
+          currentPage: currentState.currentPage,
+          isOffline: !_connectivityService.isOnline,
+          typingUsers: currentState.typingUsers,
         );
+
+        emit(newState);
       }
 
-      // Show toast if offline
       if (!_connectivityService.isOnline) {
         emit(MessageQueued('Message will be sent when online'));
         if (currentState is ChatRoomLoaded) {
@@ -287,13 +283,16 @@ class ChatRoomCubit extends Cubit<ChatRoomState> {
       }
     } catch (e) {
       if (e.toString().contains('409')) {
-        print('✅ Message already sent, skipping');
         emit(DuplicateMessage('Message already sent'));
+        if (currentState is ChatRoomLoaded) {
+          emit(currentState);
+        }
+        return;
       }
+      emit(MessageSendError(e.toString()));
       if (currentState is ChatRoomLoaded) {
         emit(currentState);
       }
-      emit(MessageSendError(e.toString()));
     }
   }
 
@@ -321,7 +320,6 @@ class ChatRoomCubit extends Cubit<ChatRoomState> {
       if (currentState is ChatRoomLoaded) {
         emit(currentState);
       }
-      print('Error deleting message from cubit: $e');
       emit(ChatRoomError(e.toString().split(':')[2]));
     }
   }
@@ -338,7 +336,6 @@ class ChatRoomCubit extends Cubit<ChatRoomState> {
     if (!_connectivityService.isOnline) return;
 
     final now = DateTime.now();
-    // Debounce: only emit once every 2 seconds
     if (_lastTypingEmit != null &&
         now.difference(_lastTypingEmit!).inSeconds < 2) {
       return;
@@ -349,7 +346,6 @@ class ChatRoomCubit extends Cubit<ChatRoomState> {
     _webSocketService.emitTyping(roomId, username);
     _lastTypingEmit = now;
 
-    // Auto-stop after 3 seconds of inactivity
     _typingStopTimer?.cancel();
     _typingStopTimer = Timer(const Duration(seconds: 3), () {
       stopTyping(roomId, username);
@@ -357,11 +353,11 @@ class ChatRoomCubit extends Cubit<ChatRoomState> {
   }
 
   void stopTyping(int roomId, String username) {
-    _typingStopTimer?.cancel();
-    _lastTypingEmit = null;
     if (_connectivityService.isOnline) {
       _webSocketService.emitStopTyping(roomId, username: username);
     }
+    _typingStopTimer?.cancel();
+    _lastTypingEmit = null;
   }
 
   @override

@@ -85,10 +85,7 @@ class AvatarWidget extends StatelessWidget {
               decoration: BoxDecoration(
                 color: isOnline ? Colors.green : Colors.grey,
                 shape: BoxShape.circle,
-                border: Border.all(
-                  color: Colors.white,
-                  width: 2,
-                ),
+                border: Border.all(color: Colors.white, width: 2),
               ),
             ),
           ),

@@ -31,7 +31,6 @@ class _TypingIndicatorWidgetState extends State<TypingIndicatorWidget>
 
   String _getTypingText() {
     final usernames = widget.typingUsers.values.toList();
-    print('usernames $usernames');
     if (usernames.isEmpty) return '';
 
     if (usernames.length == 1) {

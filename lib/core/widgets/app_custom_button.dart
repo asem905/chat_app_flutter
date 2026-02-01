@@ -18,7 +18,7 @@ class CustomButton extends StatelessWidget {
   final Widget? suffixIcon;
 
   const CustomButton({
-    Key? key,
+    super.key,
     required this.text,
     this.onPressed,
     this.isLoading = false,
@@ -27,7 +27,7 @@ class CustomButton extends StatelessWidget {
     this.height = 56,
     this.prefixIcon,
     this.suffixIcon,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -92,7 +92,9 @@ class CustomButton extends StatelessWidget {
                     ],
                     Text(
                       text,
-                      style: AppTextStyles.button.copyWith(color: getTextColor()),
+                      style: AppTextStyles.button.copyWith(
+                        color: getTextColor(),
+                      ),
                     ),
                     if (suffixIcon != null) ...[
                       SizedBox(width: 8.w),

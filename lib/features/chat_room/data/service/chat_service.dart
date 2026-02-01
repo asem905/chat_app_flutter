@@ -10,7 +10,7 @@ class ChatRoomService {
 
   Future<List<MessageModel>> getMessages(
     int roomId, {
-    int limit = 50,
+    int limit = 200,
     int offset = 0,
   }) async {
     final result = await getTokenAndCurrentUserId();
@@ -24,12 +24,10 @@ class ChatRoomService {
         'Authorization': 'Bearer $token',
       },
     );
-    print('response.body: ${response.body}');
     try {
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData = jsonDecode(response.body);
         final List<dynamic> messagesJson = responseData['data'] ?? [];
-        print('messagesJson: $messagesJson');
         return messagesJson
             .map((json) => MessageModel.fromJson(json, currentUserId))
             .toList();
@@ -37,7 +35,6 @@ class ChatRoomService {
         throw Exception('Failed to fetch messages: ');
       }
     } catch (e) {
-      print('Error fetching messages: ${e.toString()}');
       throw Exception('Failed to fetch messages: ${e.toString()}');
     }
   }
@@ -46,9 +43,6 @@ class ChatRoomService {
     int roomId,
     SendMessageRequest request,
   ) async {
-    print(
-      'roomId: $roomId, request: ${request.content} and parentMessageId: ${request.parentMessageId} and roomId: ${request.roomId}',
-    );
     final result = await getTokenAndCurrentUserId();
     final token = result['token'];
     final currentUserId = await result['currentUserId'];
@@ -62,7 +56,6 @@ class ChatRoomService {
       },
       body: jsonEncode(request.toJson()),
     );
-    print('response.statusCode: ${response.statusCode}');
     try {
       if (response.statusCode == 200 || response.statusCode == 201) {
         final Map<String, dynamic> responseData = jsonDecode(response.body);
@@ -70,7 +63,6 @@ class ChatRoomService {
         return MessageModel.fromJson(messageJson, currentUserId);
       } else {
         if (response.statusCode == 409) {
-          print('✅ Message already sent, skipping');
           return MessageModel(
             content: request.content,
             id: 0,
@@ -86,7 +78,6 @@ class ChatRoomService {
       }
     } catch (e) {
       if (e.toString().contains('409')) {
-        print('✅ Message already sent, skipping');
         return MessageModel(
           content: request.content,
           id: 0,
@@ -97,7 +88,6 @@ class ChatRoomService {
           isMine: 0,
         );
       } else {
-        print('Error sending message: ${e.toString()}');
         throw Exception('Failed to send message: ${e.toString()}');
       }
     }
@@ -130,7 +120,6 @@ class ChatRoomService {
         throw Exception('Failed to edit message: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error editing message: ${e.toString()}');
       throw Exception('Failed to edit message: ${e.toString()}');
     }
   }
@@ -150,12 +139,9 @@ class ChatRoomService {
     try {
       if (response.statusCode == 200) {
         // Success - no return needed
-        print('Message $messageId deleted successfully');
       } else {
         if (response.statusCode == 401) {
-          throw Exception(
-            'Unauthorized to delete message',
-          );
+          throw Exception('Unauthorized to delete message');
         } else if (response.statusCode == 404) {
           throw Exception('Message not found');
         } else {
@@ -164,9 +150,7 @@ class ChatRoomService {
       }
     } catch (e) {
       if (response.statusCode == 401) {
-        throw Exception(
-          'Unauthorized to delete message',
-        );
+        throw Exception('Unauthorized to delete message');
       } else if (response.statusCode == 404) {
         throw Exception('Message not found');
       } else {

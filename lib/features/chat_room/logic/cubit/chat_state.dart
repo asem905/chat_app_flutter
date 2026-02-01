@@ -82,15 +82,15 @@ class ChatRoomLoaded extends ChatRoomState {
   final List<MessageModel> messages;
   final bool hasMore;
   final int currentPage;
-  final bool isOffline; // ✅ NEW
-  final Map<int, String> typingUsers; // userId -> username
+  final bool isOffline;
+  final Map<int, String> typingUsers;
 
   ChatRoomLoaded({
     required this.messages,
     required this.hasMore,
     required this.currentPage,
-    this.isOffline = false, // ✅ NEW
-    this.typingUsers = const {}, // ✅ NEW
+    this.isOffline = false,
+    this.typingUsers = const {},
   });
 
   @override
@@ -103,7 +103,6 @@ class ChatRoomLoaded extends ChatRoomState {
   ];
 }
 
-// ✅ NEW STATE
 class MessageQueued extends ChatRoomState {
   final String message;
   MessageQueued(this.message);

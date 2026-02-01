@@ -27,23 +27,19 @@ class SignUpCubit extends Cubit<SignUpState> {
         confirmPassword: confirmPassword,
         role: role,
       );
-      print("SignUp request: ${request.toJson()}");
       final response = await _repository.signUp(request);
 
       final token = response.data['user']['token'];
       final userId = response.data['user']['id'] as int;
       final userName = response.data['user']['username'];
 
-      // Save user data
       await SharedPrefHelper.setData('current_user_id', userId);
       await SharedPrefHelper.setData('user_name', userName);
 
-      // Save token with expiration handling
       await TokenManager().saveToken(token, validity: const Duration(hours: 1));
 
       emit(SignUpSuccess(response));
     } catch (e) {
-      print("SignUp error: ${e.toString()}");
       emit(SignUpError(e.toString()));
     }
   }

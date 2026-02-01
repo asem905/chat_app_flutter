@@ -11,7 +11,6 @@ class SignUpService {
 
   Future<SignUpResponse> signUp(SignUpRequest request) async {
     var req = jsonEncode(request.toJson());
-    print("SignUp request===========: $req");
     final response = await http.post(
       Uri.parse(ApiConstants.signUp),
       headers: {
@@ -20,12 +19,10 @@ class SignUpService {
       },
       body: req,
     );
-    print("SignUp response===========: ${response.body}");
     if (response.statusCode == 201) {
       var res = json.decode(response.body);
       return SignUpResponse.fromJson(res);
     } else {
-      print("SignUp response===========: ${response.body}");
       throw Exception('Failed to SignUp');
     }
   }

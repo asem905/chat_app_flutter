@@ -19,7 +19,7 @@ class CustomTextFormField extends StatefulWidget {
   final int maxLines;
 
   const CustomTextFormField({
-    Key? key,
+    super.key,
     required this.controller,
     required this.hintText,
     this.labelText,
@@ -32,7 +32,7 @@ class CustomTextFormField extends StatefulWidget {
     this.validator,
     this.enabled = true,
     this.maxLines = 1,
-  }) : super(key: key);
+  });
 
   @override
   State<CustomTextFormField> createState() => _CustomTextFormFieldState();
@@ -90,7 +90,9 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
                 suffixIcon: widget.suffixIcon,
                 errorText: widget.errorText,
                 filled: true,
-                fillColor: widget.enabled ? AppColors.surface : AppColors.background,
+                fillColor: widget.enabled
+                    ? AppColors.surface
+                    : AppColors.background,
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 16,
@@ -101,19 +103,31 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+                  borderSide: const BorderSide(
+                    color: AppColors.border,
+                    width: 1.5,
+                  ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                  borderSide: const BorderSide(
+                    color: AppColors.primary,
+                    width: 2,
+                  ),
                 ),
                 errorBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.error, width: 1.5),
+                  borderSide: const BorderSide(
+                    color: AppColors.error,
+                    width: 1.5,
+                  ),
                 ),
                 focusedErrorBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.error, width: 2),
+                  borderSide: const BorderSide(
+                    color: AppColors.error,
+                    width: 2,
+                  ),
                 ),
                 disabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),

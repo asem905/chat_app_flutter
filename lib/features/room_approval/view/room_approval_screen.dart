@@ -21,10 +21,10 @@ class RoomApprovalScreen extends StatefulWidget {
   final String roomName;
 
   const RoomApprovalScreen({
-    Key? key,
+    super.key,
     required this.roomId,
     required this.roomName,
-  }) : super(key: key);
+  });
 
   @override
   State<RoomApprovalScreen> createState() => _RoomApprovalScreenState();
@@ -283,7 +283,6 @@ class _RoomApprovalScreenState extends State<RoomApprovalScreen> {
                       itemCount: state.pendingUsers.length,
                       itemBuilder: (context, index) {
                         final user = state.pendingUsers[index];
-                        print("user: ${user.id}");
                         return PendingUserCard(
                           user: user,
                           isProcessing: _processingUserId == user.id,

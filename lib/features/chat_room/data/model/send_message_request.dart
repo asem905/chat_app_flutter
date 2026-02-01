@@ -15,7 +15,6 @@ class SendMessageRequest {
   }) : idempotencyToken = _generateToken(content, roomId);
 
   static String _generateToken(String content, int roomId) {
-    // Generate deterministic token from content + room + timestamp
     final timestamp = DateTime.now().second;
     final data = '$content-$roomId-$timestamp';
     return sha256.convert(utf8.encode(data)).toString();

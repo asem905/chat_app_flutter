@@ -7,13 +7,14 @@ import 'package:chat_app/features/login/logic/cubit/login_state.dart';
 import 'package:chat_app/features/login/view/widgets/password_text_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/theming/app_colors.dart';
 import '../../../../core/theming/text_styles.dart';
 import '../../../../core/widgets/app_custom_button.dart';
 import '../../../../core/widgets/app_text_form_field.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({Key? key}) : super(key: key);
+  const LoginScreen({super.key});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -108,7 +109,7 @@ class _LoginScreenState extends State<LoginScreen>
                     content: Row(
                       children: [
                         const Icon(Icons.check_circle, color: Colors.white),
-                        const SizedBox(width: 12),
+                        SizedBox(width: 12.w),
                         const Text('Login successful!'),
                       ],
                     ),
@@ -120,7 +121,6 @@ class _LoginScreenState extends State<LoginScreen>
                     margin: const EdgeInsets.all(16),
                   ),
                 );
-                // Navigate to home screen
                 context.pushNamed(Routes.homeScreen);
               } else if (state is LoginError) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -137,7 +137,12 @@ class _LoginScreenState extends State<LoginScreen>
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    margin: const EdgeInsets.all(16),
+                    margin: EdgeInsets.only(
+                      left: 16.w,
+                      right: 16.w,
+                      top: 16.h,
+                      bottom: 16.h,
+                    ),
                   ),
                 );
               }
@@ -146,7 +151,7 @@ class _LoginScreenState extends State<LoginScreen>
               final isLoading = state is LoginLoading;
 
               return SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
+                padding: EdgeInsets.all(24.w),
                 child: FadeTransition(
                   opacity: _fadeAnimation,
                   child: SlideTransition(
@@ -156,15 +161,13 @@ class _LoginScreenState extends State<LoginScreen>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const SizedBox(height: 20),
-
-                          // Logo with gradient background and shadow
+                          SizedBox(height: 20.h),
                           Center(
                             child: Hero(
                               tag: 'app_logo',
                               child: Container(
-                                width: 90,
-                                height: 90,
+                                width: 90.w,
+                                height: 90.h,
                                 decoration: BoxDecoration(
                                   gradient: LinearGradient(
                                     begin: Alignment.topLeft,
@@ -174,7 +177,7 @@ class _LoginScreenState extends State<LoginScreen>
                                       AppColors.primaryDark,
                                     ],
                                   ),
-                                  borderRadius: BorderRadius.circular(24),
+                                  borderRadius: BorderRadius.circular(24.r),
                                   boxShadow: [
                                     BoxShadow(
                                       color: AppColors.primary.withOpacity(0.4),
@@ -192,25 +195,22 @@ class _LoginScreenState extends State<LoginScreen>
                             ),
                           ),
 
-                          const SizedBox(height: 40),
+                          SizedBox(height: 40.h),
 
                           // Welcome Text with animation
-                          const Text(
-                            'Welcome Back!',
-                            style: AppTextStyles.heading1,
-                          ),
+                          Text('Welcome Back!', style: AppTextStyles.heading1),
 
-                          const SizedBox(height: 8),
+                          SizedBox(height: 8.h),
 
                           Text(
                             'Sign in to continue to your account',
                             style: AppTextStyles.bodyMedium.copyWith(
                               color: AppColors.textSecondary,
-                              fontSize: 15,
+                              fontSize: 15.sp,
                             ),
                           ),
 
-                          const SizedBox(height: 40),
+                          SizedBox(height: 40.h),
 
                           // Email Field
                           CustomTextFormField(
@@ -226,7 +226,7 @@ class _LoginScreenState extends State<LoginScreen>
                             enabled: !isLoading,
                           ),
 
-                          const SizedBox(height: 20),
+                          SizedBox(height: 20.h),
 
                           // Password Field
                           PasswordTextField(
@@ -235,7 +235,7 @@ class _LoginScreenState extends State<LoginScreen>
                             validator: _validatePassword,
                           ),
 
-                          const SizedBox(height: 16),
+                          SizedBox(height: 16.h),
 
                           // Remember Me & Forgot Password
                           Row(
@@ -244,8 +244,8 @@ class _LoginScreenState extends State<LoginScreen>
                               Row(
                                 children: [
                                   SizedBox(
-                                    width: 24,
-                                    height: 24,
+                                    width: 24.w,
+                                    height: 24.h,
                                     child: Checkbox(
                                       value: _rememberMe,
                                       onChanged: isLoading
@@ -257,11 +257,13 @@ class _LoginScreenState extends State<LoginScreen>
                                             },
                                       activeColor: AppColors.primary,
                                       shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(6),
+                                        borderRadius: BorderRadius.circular(
+                                          6.r,
+                                        ),
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
+                                  SizedBox(width: 8.w),
                                   Text(
                                     'Remember me',
                                     style: AppTextStyles.bodyMedium.copyWith(
@@ -277,8 +279,8 @@ class _LoginScreenState extends State<LoginScreen>
                                         // Navigate to forgot password
                                       },
                                 style: TextButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 8.w,
                                   ),
                                 ),
                                 child: Text(
@@ -292,7 +294,7 @@ class _LoginScreenState extends State<LoginScreen>
                             ],
                           ),
 
-                          const SizedBox(height: 32),
+                          SizedBox(height: 32.h),
 
                           // Login Button with enhanced styling
                           CustomButton(
@@ -304,21 +306,19 @@ class _LoginScreenState extends State<LoginScreen>
                                 : null,
                           ),
 
-                          const SizedBox(height: 32),
+                          SizedBox(height: 32.h),
 
                           // Divider
                           Row(
                             children: [
-                              const Expanded(
+                              Expanded(
                                 child: Divider(
                                   color: AppColors.border,
                                   thickness: 1,
                                 ),
                               ),
                               Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                ),
+                                padding: EdgeInsets.symmetric(horizontal: 16.w),
                                 child: Text(
                                   'OR',
                                   style: AppTextStyles.bodyMedium.copyWith(
@@ -326,37 +326,42 @@ class _LoginScreenState extends State<LoginScreen>
                                   ),
                                 ),
                               ),
-                              const Expanded(
+                              Expanded(
                                 child: Divider(
                                   color: AppColors.border,
-                                  thickness: 1,
+                                  thickness: 1.w,
                                 ),
                               ),
                             ],
                           ),
 
-                          const SizedBox(height: 32),
+                          SizedBox(height: 32.h),
 
                           // Social Login Buttons
                           CustomButton(
                             text: 'Continue with Google',
                             type: ButtonType.outlined,
-                            height: 56,
+                            height: 56.h,
                             onPressed: isLoading
                                 ? null
                                 : () {
                                     // Handle Google login
                                   },
                             prefixIcon: Container(
-                              padding: const EdgeInsets.all(2),
+                              padding: EdgeInsets.only(
+                                bottom: 2.h,
+                                right: 2.w,
+                                left: 2.w,
+                                top: 2.h,
+                              ),
                               child: Image.asset(
                                 'assets/images/google_icon.png', // Add Google icon to assets
-                                width: 24,
-                                height: 24,
+                                width: 24.w,
+                                height: 24.h,
                                 errorBuilder: (context, error, stackTrace) {
-                                  return const Icon(
+                                  return Icon(
                                     Icons.g_mobiledata,
-                                    size: 28,
+                                    size: 28.sp,
                                     color: AppColors.primary,
                                   );
                                 },
@@ -364,7 +369,7 @@ class _LoginScreenState extends State<LoginScreen>
                             ),
                           ),
 
-                          const SizedBox(height: 40),
+                          SizedBox(height: 40.h),
 
                           // Sign Up Link
                           Center(
@@ -379,14 +384,13 @@ class _LoginScreenState extends State<LoginScreen>
                                   onPressed: isLoading
                                       ? null
                                       : () {
-                                          // Navigate to sign up
                                           context.pushNamed(
                                             Routes.signUpScreen,
                                           );
                                         },
                                   style: TextButton.styleFrom(
                                     padding: EdgeInsets.zero,
-                                    minimumSize: const Size(50, 30),
+                                    minimumSize: Size(50.w, 30.h),
                                     tapTargetSize:
                                         MaterialTapTargetSize.shrinkWrap,
                                   ),
@@ -395,7 +399,7 @@ class _LoginScreenState extends State<LoginScreen>
                                     style: AppTextStyles.bodyMedium.copyWith(
                                       color: AppColors.primary,
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 15,
+                                      fontSize: 15.sp,
                                     ),
                                   ),
                                 ),
@@ -403,7 +407,7 @@ class _LoginScreenState extends State<LoginScreen>
                             ),
                           ),
 
-                          const SizedBox(height: 20),
+                          SizedBox(height: 20.h),
                         ],
                       ),
                     ),

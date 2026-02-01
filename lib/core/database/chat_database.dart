@@ -1,4 +1,3 @@
-import 'package:chat_app/core/helpers/get_token.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
@@ -20,14 +19,18 @@ class ChatDatabase {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 3,
       onCreate: _createDB,
+      onUpgrade: (db, oldVersion, newVersion) async {
+        await db.execute('DROP TABLE IF EXISTS messages');
+        await db.execute('DROP TABLE IF EXISTS rooms');
+        await db.execute('DROP TABLE IF EXISTS pending_messages');
+        await _createDB(db, newVersion);
+      },
     );
   }
 
   Future _createDB(Database db, int version) async {
-    //rooms table
-    // Rooms table
     await db.execute('''
       CREATE TABLE rooms (
         id INTEGER PRIMARY KEY,
@@ -41,8 +44,7 @@ class ChatDatabase {
         last_synced_at TEXT
       )
     ''');
-    
-    // Messages table
+
     await db.execute('''
       CREATE TABLE messages (
         id INTEGER PRIMARY KEY,
@@ -57,11 +59,10 @@ class ChatDatabase {
         is_deleted INTEGER DEFAULT 0,
         is_edited INTEGER DEFAULT 0,
         is_pending INTEGER DEFAULT 0,
-        local_id TEXT UNIQUE
+        local_id TEXT
       )
     ''');
 
-    // Pending messages queue (for offline sending)
     await db.execute('''
       CREATE TABLE pending_messages (
         local_id TEXT PRIMARY KEY,
@@ -74,7 +75,6 @@ class ChatDatabase {
       )
     ''');
 
-    // Create indexes for better performance
     await db.execute('''
       CREATE INDEX idx_rooms_created_at ON rooms(createdAt)
     ''');
@@ -87,7 +87,6 @@ class ChatDatabase {
   }
 
   // ==================== MESSAGES ====================
-  
   Future<void> insertMessage(Map<String, dynamic> message) async {
     final db = await database;
     await db.insert(
@@ -107,9 +106,9 @@ class ChatDatabase {
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
     }
-    
     await batch.commit(noResult: true);
   }
+
   Future<void> updateMessage(Map<String, dynamic> message) async {
     final db = await database;
     await db.update(
@@ -120,41 +119,26 @@ class ChatDatabase {
     );
   }
 
-  Future<List<Map<String, dynamic>>> getMessages(
-    int roomId, {
-    int limit = 50,
-    int offset = 0,
-  }) async {
+  Future<List<Map<String, dynamic>>> getMessages(int roomId) async {
     final db = await database;
-    return await db.query(
+    final results = await db.query(
       'messages',
       where: 'room_id = ?',
       whereArgs: [roomId],
-      orderBy: 'created_at DESC',
-      limit: limit,
-      offset: offset,
+      orderBy: 'created_at ASC',
     );
+    return results;
   }
 
   Future<void> deleteMessage(int messageId) async {
     final db = await database;
-    await db.delete(
-      'messages',
-      where: 'id = ?',
-      whereArgs: [messageId],
-    );
+    await db.delete('messages', where: 'id = ?', whereArgs: [messageId]);
   }
 
   Future<void> clearRoomMessages(int roomId) async {
     final db = await database;
-    await db.delete(
-      'messages',
-      where: 'room_id = ?',
-      whereArgs: [roomId],
-    );
+    await db.delete('messages', where: 'room_id = ?', whereArgs: [roomId]);
   }
-
-  // ==================== PENDING MESSAGES QUEUE ====================
 
   Future<String> addPendingMessage({
     required int roomId,
@@ -163,7 +147,7 @@ class ChatDatabase {
   }) async {
     final db = await database;
     final localId = '${DateTime.now().millisecondsSinceEpoch}_$roomId';
-    
+
     await db.insert('pending_messages', {
       'local_id': localId,
       'room_id': roomId,
@@ -178,15 +162,11 @@ class ChatDatabase {
 
   Future<List<Map<String, dynamic>>> getPendingMessages() async {
     final db = await database;
-    return await db.query(
-      'pending_messages',
-      orderBy: 'created_at ASC',
-    );
+    return await db.query('pending_messages', orderBy: 'created_at ASC');
   }
 
   Future<void> removePendingMessage(String localId) async {
     final db = await database;
-    print('📡 Removing pending message with localId: $localId');
     await db.delete(
       'pending_messages',
       where: 'local_id = ?',
@@ -204,7 +184,7 @@ class ChatDatabase {
 
   // ==================== ROOMS ====================
 
-   Future<void> insertRoom(Map<String, dynamic> room) async {
+  Future<void> insertRoom(Map<String, dynamic> room) async {
     final db = await database;
     await db.insert(
       'rooms',
@@ -216,28 +196,17 @@ class ChatDatabase {
   Future<void> insertRooms(List<Map<String, dynamic>> rooms) async {
     final db = await database;
     final batch = db.batch();
-    
+
     for (var room in rooms) {
-      batch.insert(
-        'rooms',
-        room,
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      batch.insert('rooms', room, conflictAlgorithm: ConflictAlgorithm.replace);
     }
-    
+
     await batch.commit(noResult: true);
   }
 
   Future<List<Map<String, dynamic>>> getRooms() async {
     final db = await database;
-    final currentUser=await getTokenAndCurrentUserId();
-    final currentUserId=currentUser['currentUserId'];
-    print("currentUserId to cache rooms : $currentUserId");
-    return await db.query(
-      'rooms',
-      distinct: true,
-      orderBy: 'updatedAt DESC',
-    );
+    return await db.query('rooms', distinct: true, orderBy: 'updatedAt DESC');
   }
 
   Future<void> updateRoomUnreadCount(int roomId, int unreadCount) async {
@@ -252,13 +221,8 @@ class ChatDatabase {
 
   Future<void> deleteRoom(int roomId) async {
     final db = await database;
-    await db.delete(
-      'rooms',
-      where: 'id = ?',
-      whereArgs: [roomId],
-    );
+    await db.delete('rooms', where: 'id = ?', whereArgs: [roomId]);
   }
-
 
   // ==================== UTILITY ====================
 

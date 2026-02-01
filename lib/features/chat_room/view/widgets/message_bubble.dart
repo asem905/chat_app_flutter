@@ -32,10 +32,6 @@ class MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print(
-      "current user id: ${message.userId == (currentUserId) ? "You" : message.username}",
-    );
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Row(
@@ -49,7 +45,7 @@ class MessageBubble extends StatelessWidget {
               imageUrl: null,
               name: message.userId == (currentUserId)
                   ? "You"
-                  : message.username!,
+                  : message.username ?? 'Unknown',
               size: 32,
             ),
             const SizedBox(width: 8),
@@ -100,7 +96,7 @@ class MessageBubble extends StatelessWidget {
                       Text(
                         message.userId == currentUserId
                             ? "You"
-                            : message.username!,
+                            : message.username ?? 'Unknown',
                         style: AppTextStyles.bodyMedium.copyWith(
                           fontWeight: FontWeight.bold,
                           color: AppColors.primary,
@@ -109,13 +105,16 @@ class MessageBubble extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                     ],
-                    //putting message we replyed to above my message to make it easier to see
-                    if(message.parentMessageId != null && message.parentMessageId != 0 && parentMessage != null) ...[
+                    if (message.parentMessageId != null &&
+                        message.parentMessageId != 0 &&
+                        parentMessage != null) ...[
                       Text(
                         'replied to: ${parentMessage?.content}',
                         style: AppTextStyles.bodyMedium.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: message.isMine == 1 ? Colors.white70 : AppColors.primary.withOpacity(0.8),
+                          color: message.isMine == 1
+                              ? Colors.white70
+                              : AppColors.primary.withOpacity(0.8),
                           fontSize: 13,
                         ),
                       ),
@@ -167,7 +166,6 @@ class MessageBubble extends StatelessWidget {
                           ),
                         ],
 
-                        // ✅ NEW: Status indicator for sent messages
                         if ((message.isMine == 1 ? true : false) &&
                             !(message.isDeleted == 1)) ...[
                           const SizedBox(width: 6),
@@ -176,13 +174,13 @@ class MessageBubble extends StatelessWidget {
                               Icons.schedule,
                               size: 14,
                               color: Colors.white.withOpacity(0.7),
-                            ) // ⏱️ Pending/Queued
+                            )
                           else
                             Icon(
                               Icons.done_all,
                               size: 14,
                               color: Colors.white.withOpacity(0.9),
-                            ), // ✓✓ Sent/Delivered
+                            ),
                         ],
                       ],
                     ),
@@ -198,7 +196,7 @@ class MessageBubble extends StatelessWidget {
               imageUrl: null,
               name: message.userId == (currentUserId)
                   ? "You"
-                  : message.username!,
+                  : message.username ?? 'Unknown',
               size: 32,
             ),
           ] else if ((message.isMine == 1 ? true : false) && !showAvatar)
@@ -209,53 +207,53 @@ class MessageBubble extends StatelessWidget {
   }
 
   void _showMessageOptions(BuildContext context, isMine) {
-  if (message.isDeleted == 1) return;
+    if (message.isDeleted == 1) return;
 
-  final replyCallback = onReply;
-  final editCallback = onEdit;
-  final deleteCallback = onDelete;
+    final replyCallback = onReply;
+    final editCallback = onEdit;
+    final deleteCallback = onDelete;
 
-  showModalBottomSheet(
-    context: context,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
-    builder: (bottomSheetContext) => Container(
-      padding: const EdgeInsets.symmetric(vertical: 20),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (replyCallback != null)
-            ListTile(
-              leading: const Icon(Icons.reply, color: AppColors.primary),
-              title: const Text('Reply'),
-              onTap: () {
-                Navigator.pop(bottomSheetContext); 
-                replyCallback(); 
-              },
-            ),
-          if (isMine == 1)
-            if (editCallback != null)
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (bottomSheetContext) => Container(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (replyCallback != null)
               ListTile(
-                leading: const Icon(Icons.edit, color: AppColors.primary),
-                title: const Text('Edit'),
+                leading: const Icon(Icons.reply, color: AppColors.primary),
+                title: const Text('Reply'),
                 onTap: () {
-                  Navigator.pop(bottomSheetContext); 
-                  editCallback(); 
+                  Navigator.pop(bottomSheetContext);
+                  replyCallback();
                 },
               ),
-          if (deleteCallback != null)
-            ListTile(
-              leading: const Icon(Icons.delete, color: AppColors.error),
-              title: const Text('Delete'),
-              onTap: () {
-                Navigator.pop(bottomSheetContext); 
-                deleteCallback(); 
-              },
-            ),
-        ],
+            if (isMine == 1)
+              if (editCallback != null)
+                ListTile(
+                  leading: const Icon(Icons.edit, color: AppColors.primary),
+                  title: const Text('Edit'),
+                  onTap: () {
+                    Navigator.pop(bottomSheetContext);
+                    editCallback();
+                  },
+                ),
+            if (deleteCallback != null)
+              ListTile(
+                leading: const Icon(Icons.delete, color: AppColors.error),
+                title: const Text('Delete'),
+                onTap: () {
+                  Navigator.pop(bottomSheetContext);
+                  deleteCallback();
+                },
+              ),
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 }

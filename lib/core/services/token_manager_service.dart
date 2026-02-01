@@ -23,32 +23,23 @@ class TokenManager {
     cancelTimer();
 
     await SharedPrefHelper.setSecuredString(SharedPrefKeys.userToken, token);
-    print("token+=+: $token");
 
     _tokenExpirationTime = DateTime.now().add(validity);
-    print(
-      "token_expiration+=+: ${_tokenExpirationTime!.millisecondsSinceEpoch}",
-    );
     await SharedPrefHelper.setData(
       'token_expiration',
       _tokenExpirationTime!.millisecondsSinceEpoch,
     );
 
     _startExpirationTimer(validity);
-
-    print("Token saved. Expires at: $_tokenExpirationTime");
   }
 
-  //i can navigate to login screen from any screen when token expires due to global navigator key i passed to main
   void _startExpirationTimer(Duration duration) {
     _expirationTimer = Timer(duration, () async {
-      print("Token expired - logging out user");
       await clearToken();
       _onTokenExpired?.call();
     });
   }
 
-  /// Check if token is still valid and restore timer if app was closed
   Future<bool> checkAndRestoreToken() async {
     final token = await SharedPrefHelper.getSecuredString(
       SharedPrefKeys.userToken,
@@ -71,18 +62,14 @@ class TokenManager {
     final now = DateTime.now();
 
     if (now.isAfter(expirationTime)) {
-      // Token expired
-      print("Token already expired");
       await clearToken();
       return false;
     }
 
-    // Token still valid, restart timer with remaining time
     final remainingDuration = expirationTime.difference(now);
     _tokenExpirationTime = expirationTime;
     _startExpirationTimer(remainingDuration);
 
-    print("Token valid. Expires in: ${remainingDuration.inMinutes} minutes");
     return true;
   }
 
@@ -93,20 +80,17 @@ class TokenManager {
     _tokenExpirationTime = null;
   }
 
-  /// Cancel the expiration timer
   void cancelTimer() {
     _expirationTimer?.cancel();
     _expirationTimer = null;
   }
 
-  /// Get remaining time before token expiration
   Duration? getRemainingTime() {
     if (_tokenExpirationTime == null) return null;
     final remaining = _tokenExpirationTime!.difference(DateTime.now());
     return remaining.isNegative ? Duration.zero : remaining;
   }
 
-  /// Extend token validity (call after successful API request)
   Future<void> extendToken({
     Duration extension = const Duration(hours: 1),
   }) async {
@@ -119,11 +103,8 @@ class TokenManager {
       _tokenExpirationTime!.millisecondsSinceEpoch,
     );
     _startExpirationTimer(extension);
-
-    print("Token extended. New expiration: $_tokenExpirationTime");
   }
 
-  /// Dispose resources
   void dispose() {
     cancelTimer();
     _onTokenExpired = null;

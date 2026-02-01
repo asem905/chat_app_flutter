@@ -18,10 +18,10 @@ class RoomApprovalCubit extends Cubit<RoomApprovalState> {
     _connectivitySubscription = _connectivityService.onConnectivityChanged
         .listen((isOnline) {
           if (isOnline) {
-            print('🌐 Back online! Refreshing rooms...');
+            print('Back online! Refreshing rooms...');
             _refreshInBackground();
           } else {
-            print('📵 Gone offline. Using cached data.');
+            print('Gone offline. Using cached data.');
           }
         });
   }
@@ -74,7 +74,6 @@ class RoomApprovalCubit extends Cubit<RoomApprovalState> {
       await _repository.approveUser(roomId, userId);
       emit(UserApproved(username));
 
-      // Reload the list
       await loadPendingUsers();
     } catch (e) {
       if (currentState is RoomApprovalLoaded) {
@@ -82,7 +81,6 @@ class RoomApprovalCubit extends Cubit<RoomApprovalState> {
       }
       emit(ApprovalActionError(e.toString()));
 
-      // Return to previous state
       if (currentState is RoomApprovalLoaded) {
         emit(currentState);
       }
@@ -97,7 +95,6 @@ class RoomApprovalCubit extends Cubit<RoomApprovalState> {
       await _repository.rejectUser(roomId, userId);
       emit(UserRejected(username));
 
-      // Reload the list
       await loadPendingUsers();
     } catch (e) {
       if (currentState is RoomApprovalLoaded) {
@@ -105,7 +102,6 @@ class RoomApprovalCubit extends Cubit<RoomApprovalState> {
       }
       emit(ApprovalActionError(e.toString()));
 
-      // Return to previous state
       if (currentState is RoomApprovalLoaded) {
         emit(currentState);
       }

@@ -12,7 +12,6 @@ class LoginService {
 
   Future<LoginResponse> login(LoginRequest request) async {
     var req = jsonEncode(request.toJson());
-    print("Login request===========: $req");
     final response = await http.post(
       Uri.parse(ApiConstants.login),
       headers: {
@@ -21,12 +20,10 @@ class LoginService {
       },
       body: req,
     );
-    print("Login response===========: ${response.body}");
     if (response.statusCode == 200) {
       var res = json.decode(response.body);
       return LoginResponse.fromJson(res);
     } else {
-      print("Login response===========: ${response.body}");
       throw Exception('Failed to login');
     }
   }

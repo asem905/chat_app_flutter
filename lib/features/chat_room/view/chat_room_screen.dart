@@ -1,15 +1,14 @@
 import 'package:chat_app/features/chat_room/logic/cubit/chat_cubit.dart';
-import 'package:chat_app/features/chat_room/view/widgets/date_divider.dart';
 import 'package:chat_app/features/chat_room/view/widgets/editing_message.dart';
-import 'package:chat_app/features/chat_room/view/widgets/message_bubble.dart';
 import 'package:chat_app/features/chat_room/view/widgets/message_input_bar.dart';
 import 'package:chat_app/features/chat_room/view/widgets/reply_to.dart';
 import 'package:chat_app/features/chat_room/view/widgets/typing_indicator_widget.dart';
+import 'package:chat_app/features/chat_room/view/widgets/messages_list_widget.dart';
+import 'package:chat_app/features/chat_room/view/widgets/offline_banner_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:chat_app/features/chat_room/logic/cubit/chat_state.dart';
 import 'package:chat_app/features/chat_room/data/model/message_model.dart';
-import 'package:collection/collection.dart';
 
 class ChatRoomScreen extends StatefulWidget {
   final int roomId;
@@ -18,12 +17,12 @@ class ChatRoomScreen extends StatefulWidget {
   final String userName;
 
   const ChatRoomScreen({
-    Key? key,
+    super.key,
     required this.roomId,
     required this.roomName,
     required this.currentUserId,
     required this.userName,
-  }) : super(key: key);
+  });
 
   @override
   State<ChatRoomScreen> createState() => _ChatRoomScreenState();
@@ -36,13 +35,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   MessageModel? _replyingTo;
   MessageModel? _editingMessage;
   late final ChatRoomCubit _chatRoomCubit;
-  /*
-   ** The problem of context being changed has been solved by **:
-   1-Store the cubit reference in initState using late final
-   2-Use the stored _chatRoomCubit reference everywhere instead of context.read<ChatRoomCubit>()
-   3-This way, the callbacks don't depend on ****context**** at all
-   4-Explicitly pass bloc: _chatRoomCubit to BlocConsumer
-  */
   @override
   void initState() {
     super.initState();
@@ -51,26 +43,23 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       widget.roomId,
       currentUserId: widget.currentUserId,
     );
-    _scrollController.addListener(_onScroll);
     _messageController.addListener(_onTextChanged);
   }
 
   void _onTextChanged() {
     if (_messageController.text.isNotEmpty) {
-      // Get username from somewhere - you may need to pass it or fetch it
-      // For now, using a placeholder
       _chatRoomCubit.startTyping(widget.roomId, widget.userName);
     } else {
       _chatRoomCubit.stopTyping(widget.roomId, widget.userName);
     }
   }
 
-  void _onScroll() {
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 200) {
-      _chatRoomCubit.loadMoreMessages(widget.roomId);
-    }
-  }
+  // void _onScroll() {
+  //   if (_scrollController.position.pixels >=
+  //       _scrollController.position.maxScrollExtent - 200) {
+  //     _chatRoomCubit.loadMoreMessages(widget.roomId);
+  //   }
+  // }
 
   @override
   void dispose() {
@@ -157,207 +146,118 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       appBar: AppBar(title: Text(widget.roomName), elevation: 1),
       body: Column(
         children: [
-          Expanded(
-            child: BlocConsumer<ChatRoomCubit, ChatRoomState>(
-              bloc: _chatRoomCubit,
-              listener: (context, state) {
-                if (state is MessageQueued) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Row(
-                        children: [
-                          const Icon(
-                            Icons.info_outline,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(child: Text(state.message)),
-                        ],
-                      ),
-                      backgroundColor: Colors.orange,
-                      duration: const Duration(seconds: 3),
-                    ),
-                  );
-                } else if (state is MessageSendError) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Row(
-                        children: [
-                          const Icon(
-                            Icons.error_outline,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(child: Text(state.message)),
-                        ],
-                      ),
-                      backgroundColor: Colors.red,
-                      duration: const Duration(seconds: 3),
-                    ),
-                  );
-                } else if (state is ChatRoomError) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Row(
-                        children: [
-                          const Icon(
-                            Icons.error_outline,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(child: Text(state.message)),
-                        ],
-                      ),
-                      backgroundColor: Colors.red,
-                      duration: const Duration(seconds: 3),
-                    ),
-                  );
-                } else if (state is DuplicateMessage) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Row(
-                        children: [
-                          const Icon(
-                            Icons.error_outline,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(child: Text(state.message)),
-                        ],
-                      ),
-                      backgroundColor: Colors.red,
-                      duration: const Duration(seconds: 3),
-                    ),
-                  );
-                }
-              },
-              builder: (context, state) {
-                if (state is ChatRoomLoading) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (state is ChatRoomLoaded || state is ChatRoomLoadingMore) {
-                  final messages = state is ChatRoomLoaded
-                      ? state.messages
-                      : (state as ChatRoomLoadingMore).currentMessages;
-
-                  final isOffline = state is ChatRoomLoaded
-                      ? state.isOffline
-                      : false;
-
-                  final typingUsers = state is ChatRoomLoaded
-                      ? state.typingUsers
-                      : <int, String>{};
-                  if (messages.isEmpty) {
-                    return const Center(
-                      child: Text(
-                        'No messages yet.\nBe the first to say hi!',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    );
-                  }
-
-                  return Column(
-                    children: [
-                      // Offline Banner
-                      if (isOffline)
-                        Container(
-                          width: double.infinity,
-                          color: Colors.orange.shade700,
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 8,
-                            horizontal: 16,
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.cloud_off,
-                                color: Colors.white,
-                                size: 18,
-                              ),
-                              const SizedBox(width: 8),
-                              const Expanded(
-                                child: Text(
-                                  'You are offline. Messages will be sent when online.',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+          BlocListener<ChatRoomCubit, ChatRoomState>(
+            bloc: _chatRoomCubit,
+            listener: (context, state) {
+              if (state is MessageQueued) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Row(
+                      children: [
+                        const Icon(
+                          Icons.info_outline,
+                          color: Colors.white,
+                          size: 20,
                         ),
-
-                      // Messages List
-                      Expanded(
-                        child: RefreshIndicator(
-                          onRefresh: () async {
-                            await _chatRoomCubit.loadMessages(
-                              widget.roomId,
-                              refresh: true,
-                            );
-                          },
-                          child: ListView.builder(
-                            controller: _scrollController,
-                            reverse: false,
-                            padding: const EdgeInsets.all(16),
-                            itemCount:
-                                messages.length +
-                                (state is ChatRoomLoadingMore ? 1 : 0),
-                            itemBuilder: (context, index) {
-                              if (state is ChatRoomLoadingMore &&
-                                  index == messages.length) {
-                                return const Center(
-                                  child: Padding(
-                                    padding: EdgeInsets.all(8.0),
-                                    child: CircularProgressIndicator(),
-                                  ),
-                                );
-                              }
-                              final message = messages[index];
-                              final previousMessage = index > 0
-                                  ? messages[index - 1]
-                                  : null;
-                              final showDateDivider = _shouldShowDateDivider(
-                                message.createdAt,
-                                previousMessage?.createdAt,
-                              );
-
-                              return Column(
-                                children: [
-                                  if (showDateDivider)
-                                    DateDivider(date: message.createdAt),
-                                  MessageBubble(
-                                    message: message,
-                                    onReply: () => _startReply(message),
-                                    onEdit: () => _startEdit(message),
-                                    onDelete: () => _deleteMessage(message.id),
-                                    currentUserId: widget.currentUserId,
-                                    isPending: message.isPending == 1,
-                                    parentMessage: messages.firstWhereOrNull(
-                                      (m) => m.id == message.parentMessageId,
-                                    ),
-                                  ),
-                                ],
-                              );
-                            },
-                          ),
+                        const SizedBox(width: 8),
+                        Expanded(child: Text(state.message)),
+                      ],
+                    ),
+                    backgroundColor: Colors.orange,
+                    duration: const Duration(seconds: 3),
+                  ),
+                );
+              } else if (state is MessageSendError) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Row(
+                      children: [
+                        const Icon(
+                          Icons.error_outline,
+                          color: Colors.white,
+                          size: 20,
                         ),
-                      ),
-
-                      // Typing Indicator
-                      TypingIndicatorWidget(typingUsers: typingUsers),
-                    ],
-                  );
-                }
-
-                return const SizedBox();
-              },
+                        const SizedBox(width: 8),
+                        Expanded(child: Text(state.message)),
+                      ],
+                    ),
+                    backgroundColor: Colors.red,
+                    duration: const Duration(seconds: 3),
+                  ),
+                );
+              } else if (state is ChatRoomError) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Row(
+                      children: [
+                        const Icon(
+                          Icons.error_outline,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(child: Text(state.message)),
+                      ],
+                    ),
+                    backgroundColor: Colors.red,
+                    duration: const Duration(seconds: 3),
+                  ),
+                );
+              } else if (state is DuplicateMessage) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Row(
+                      children: [
+                        const Icon(
+                          Icons.error_outline,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(child: Text(state.message)),
+                      ],
+                    ),
+                    backgroundColor: Colors.red,
+                    duration: const Duration(seconds: 3),
+                  ),
+                );
+              }
+            },
+            child: Expanded(
+              child: Column(
+                children: [
+                  OfflineBannerWidget(chatRoomCubit: _chatRoomCubit),
+                  Expanded(
+                    child: MessagesListWidget(
+                      scrollController: _scrollController,
+                      roomId: widget.roomId,
+                      currentUserId: widget.currentUserId,
+                      chatRoomCubit: _chatRoomCubit,
+                      onReply: _startReply,
+                      onEdit: _startEdit,
+                      onDelete: _deleteMessage,
+                    ),
+                  ),
+                  BlocBuilder<ChatRoomCubit, ChatRoomState>(
+                    bloc: _chatRoomCubit,
+                    buildWhen: (previous, current) {
+                      if (previous is ChatRoomLoaded &&
+                          current is ChatRoomLoaded) {
+                        return previous.typingUsers != current.typingUsers;
+                      }
+                      return true;
+                    },
+                    builder: (context, state) {
+                      if (state is ChatRoomLoaded) {
+                        return TypingIndicatorWidget(
+                          typingUsers: state.typingUsers,
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
           if (_replyingTo != null)
@@ -376,12 +276,5 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         ],
       ),
     );
-  }
-
-  bool _shouldShowDateDivider(DateTime current, DateTime? previous) {
-    if (previous == null) return true;
-    return current.day != previous.day ||
-        current.month != previous.month ||
-        current.year != previous.year;
   }
 }

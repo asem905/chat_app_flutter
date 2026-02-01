@@ -27,7 +27,7 @@ class LoginCubit extends Cubit<LoginState> {
       await SharedPrefHelper.setData('user_name', userName);
 
       // Save token with expiration handling
-      await TokenManager().saveToken(token, validity: const Duration(hours: 1));
+      await TokenManager().saveToken(token, validity: const Duration(days: 3));
 
       emit(LoginSuccess(response));
     } catch (e) {

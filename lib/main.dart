@@ -1,6 +1,5 @@
 import 'package:chat_app/chat_app.dart';
 import 'package:chat_app/core/di/dependency_incjection.dart.dart';
-import 'package:chat_app/core/networking/api_constants.dart';
 import 'package:chat_app/core/routing/app_router.dart';
 import 'package:chat_app/core/routing/routes.dart';
 import 'package:chat_app/core/services/token_manager_service.dart';
@@ -36,14 +35,11 @@ void main() async {
 }
 
 Future<bool> checkIfLoggedInUser() async {
-  // Check if token exists and is still valid
   final isValid = await TokenManager().checkAndRestoreToken();
 
   if (isValid) {
-    print("User logged in - token valid");
     return true;
   } else {
-    print("User not logged in or token expired");
     return false;
   }
 }

@@ -11,14 +11,14 @@ class PasswordTextField extends StatefulWidget {
   final bool enabled;
 
   const PasswordTextField({
-    Key? key,
+    super.key,
     required this.controller,
     this.labelText,
     this.errorText,
     this.onChanged,
     this.validator,
     this.enabled = true,
-  }) : super(key: key);
+  });
 
   @override
   State<PasswordTextField> createState() => _PasswordTextFieldState();
@@ -39,10 +39,15 @@ class _PasswordTextFieldState extends State<PasswordTextField> {
       onChanged: widget.onChanged,
       validator: widget.validator,
       enabled: widget.enabled,
-      prefixIcon: const Icon(Icons.lock_outline, color: AppColors.textSecondary),
+      prefixIcon: const Icon(
+        Icons.lock_outline,
+        color: AppColors.textSecondary,
+      ),
       suffixIcon: IconButton(
         icon: Icon(
-          _isObscured ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+          _isObscured
+              ? Icons.visibility_outlined
+              : Icons.visibility_off_outlined,
           color: AppColors.textSecondary,
         ),
         onPressed: () {

@@ -1,3 +1,5 @@
+// ignore_for_file: library_prefixes
+
 import 'dart:async';
 import 'package:chat_app/core/helpers/get_token.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
@@ -28,7 +30,7 @@ class WebSocketService {
     }
     print('WebSocket connecting...');
     _socket = IO.io(
-      ApiConstants.baseUrl, // Your server URL
+      ApiConstants.baseUrl,
       IO.OptionBuilder()
           .setTransports(['websocket'])
           .enableAutoConnect()
@@ -36,7 +38,6 @@ class WebSocketService {
           .setAuth({'Authorization': 'Bearer $token'})
           .build(),
     );
-    print("✅ ${_socket?.connected}");
     _setupEventListeners();
   }
 
@@ -63,7 +64,15 @@ class WebSocketService {
       }
     });
     _socket?.on('userTyping', (data) {
-      print('👤 User typing event: $data');
+      print('User typing event: $data');
+      try {
+        _typingController.add(data as Map<String, dynamic>);
+      } catch (e) {
+        print('Error parsing typing event: $e');
+      }
+    });
+    _socket?.on('userStoppedTyping', (data) {
+      print('User stop typing event: $data');
       try {
         _typingController.add(data as Map<String, dynamic>);
       } catch (e) {
@@ -91,9 +100,8 @@ class WebSocketService {
 
   void emitTyping(int roomId, String username) {
     print("user $username is trying to typing in room of id $roomId");
-    print(_socket?.connected);
+    print("socket connected: ${_socket?.connected}");
     if (_socket?.connected ?? false) {
-      print('✅ WebSocket connected');
       _socket?.emit('typing', {
         'roomId': roomId.toString(),
         'username': username,
