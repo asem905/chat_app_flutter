@@ -25,11 +25,18 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int currnt_index = 0;
-
+  bool isSearch = false;
+  TextEditingController searchController = TextEditingController();
   @override
   void initState() {
     super.initState();
     context.read<HomeCubit>().loadRooms();
+  }
+
+  @override
+  void dispose() {
+    searchController.dispose();
+    super.dispose();
   }
 
   void _showCreateRoomDialog() {
@@ -148,31 +155,81 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: AppColors.background,
         elevation: 0,
       ),
-      appBar: CustomAppBar(
-        title: 'Chats',
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search, color: AppColors.textPrimary),
-            onPressed: () {
-              // Implement search functionality
-            },
-          ),
-          IconButton(
-            icon: const Icon(
-              Icons.explore_outlined,
-              color: AppColors.textPrimary,
+      appBar: isSearch
+          ? AppBar(
+              title: TextFormField(
+                controller: searchController,
+                decoration: InputDecoration(
+                  hintText: 'Search',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(22),
+                    borderSide: const BorderSide(color: AppColors.primary),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(22),
+                    borderSide: const BorderSide(color: AppColors.primary),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(22),
+                    borderSide: const BorderSide(color: AppColors.primary),
+                  ),
+                  errorBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(22),
+                    borderSide: const BorderSide(color: AppColors.error),
+                  ),
+                  filled: true,
+                  fillColor: AppColors.surface,
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.close, color: AppColors.textPrimary),
+                    onPressed: () {
+                      searchController.clear();
+                      setState(() {
+                        isSearch = !isSearch;
+                      });
+                    },
+                  ),
+                  prefixIcon: IconButton(
+                    icon: const Icon(
+                      Icons.search,
+                      color: AppColors.textPrimary,
+                    ),
+                    onPressed: () {
+                      // Implement search functionality
+                      context.read<HomeCubit>().searchRooms(
+                        searchController.text,
+                      );
+                    },
+                  ),
+                ),
+              ),
+            )
+          : CustomAppBar(
+              title: 'Chats',
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.search, color: AppColors.textPrimary),
+                  onPressed: () {
+                    setState(() {
+                      isSearch = !isSearch;
+                    });
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.refresh, color: AppColors.textPrimary),
+                  tooltip: 'Refresh',
+                  onPressed: () {
+                    context.read<HomeCubit>().loadRooms();
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(
+                    Icons.more_vert,
+                    color: AppColors.textPrimary,
+                  ),
+                  onPressed: _showMenu,
+                ),
+              ],
             ),
-            tooltip: 'Discover Rooms',
-            onPressed: () {
-              context.pushNamed(Routes.discoverRoomsScreen);
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.more_vert, color: AppColors.textPrimary),
-            onPressed: _showMenu,
-          ),
-        ],
-      ),
 
       body: BlocConsumer<HomeCubit, HomeState>(
         listener: (context, state) {

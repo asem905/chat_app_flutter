@@ -13,4 +13,5 @@ class ApiConstants {
   static String get myRooms => "$rooms/";
   static String get getAllRooms => "$rooms/all-rooms";
   static String get createRoom => "$rooms/create";
+  static String get searchRooms => "$rooms/search";
 }

@@ -8,7 +8,7 @@
 //   final DateTime createdAt;
 //   final bool is_private;
 //   final int room_created_by;
-  
+
 //   RoomModel({
 //     required this.id,
 //     required this.room_name,
@@ -63,17 +63,21 @@ class RoomModel {
     required this.createdAt,
     required this.updatedAt,
   });
-  
+
   factory RoomModel.fromJson(Map<String, dynamic> json) {
     return RoomModel(
-      id: json['id'],
-      room_name: json['room_name'],
-      room_description: json['room_description'],
-      room_created_by: json['room_created_by'],
+      id: json['id'] ?? 0,
+      room_name: json['room_name'] ?? "",
+      room_description: json['room_description'] ?? "",
+      room_created_by: json['room_created_by'] ?? 0,
       is_private: json['is_private'] == 1 || json['is_private'] == true,
       unreadCount: json['unread_count'] ?? 0,
-      createdAt: DateTime.parse(json['createdAt']),
-      updatedAt: DateTime.parse(json['updatedAt']),
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'])
+          : DateTime.now(),
+      updatedAt: json['updatedAt'] != null
+          ? DateTime.parse(json['updatedAt'])
+          : DateTime.now(),
     );
   }
 

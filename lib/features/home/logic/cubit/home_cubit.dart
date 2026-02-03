@@ -103,6 +103,33 @@ class HomeCubit extends Cubit<HomeState> {
     await loadRooms();
   }
 
+  Future<void> searchRooms(String query) async {
+    if (!_connectivityService.isOnline) {
+      emit(
+        HomeError(
+          'Cannot search rooms while offline. Please check your connection.',
+          !_connectivityService.isOnline,
+        ),
+      );
+      return;
+    }
+    final currentState = state;
+    try {
+      final rooms = await _repository.searchRooms(query);
+      emit(HomeLoaded(rooms: rooms, isOffline: !_connectivityService.isOnline));
+    } catch (e) {
+      if (currentState is HomeLoaded) {
+        emit(currentState);
+      }
+      emit(HomeError(e.toString(), !_connectivityService.isOnline));
+
+      // Restore previous state after showing error
+      if (currentState is HomeLoaded) {
+        emit(currentState);
+      }
+    }
+  }
+
   void logout() {
     emit(HomeInitial());
   }
